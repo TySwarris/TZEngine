@@ -1,0 +1,7 @@
+# Zig build artifacts
+zig-out/
+.zig-cache/
+
+# Optional: ignore compiled binaries if you ever build them manually
+*.exe
+*.o
