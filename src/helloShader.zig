@@ -1,4 +1,6 @@
 const std = @import("std");
+const math = @import("zmath");
+//const SceneObjectMod = @import("core/SceneObject.zig");
 
 const ShaderMod = @import("render/shader.zig");
 const Shader = ShaderMod.Shader;
@@ -25,6 +27,9 @@ fn glfwErrorCallback(error_code: c_int, description: [*c]const u8) callconv(.c) 
 }
 pub fn main() !void {
     std.debug.print("GLFW version: {s}\n", .{glfw.glfwGetVersionString()});
+    //std.debug.print("{f}".{iden})
+    const mat = math.identity();
+    std.debug.print("mat[0][0] = {d}\n", .{mat[0][0]});
 
     if (glfw.glfwInit() == 0) {
         std.debug.print("Failed to initialize GLFW\n", .{});
