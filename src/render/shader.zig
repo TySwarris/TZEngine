@@ -2,7 +2,7 @@ const std = @import("std");
 
 // Import OpenGL (and GLFW if you need it here)
 const c = @cImport({
-    @cInclude("GL/gl.h");
+    @cInclude("glad/glad.h");
     @cInclude("GLFW/glfw3.h");
 });
 
@@ -66,14 +66,25 @@ pub const Shader = struct {
 };
 
 fn readFileAlloc(allocator: std.mem.Allocator, path: []const u8) ![]u8 {
-    var file = try std.fs.cwd().openFile(path, .{});
+    const fs = std.fs;
+
+    var file = try fs.cwd().openFile(path, .{});
     defer file.close();
 
     const stat = try file.stat();
-    const buf = try allocator.alloc(u8, @intCast(stat.size));
+    const size: usize = @intCast(stat.size);
 
-    const n = try file.readAll(buf);
-    return buf[0..n];
+    //alocate a buffer big enough for whole file
+    const buf = try allocator.alloc(u8, size);
+
+    var offset: usize = 0;
+    while (offset < size) {
+        const n = try file.read(buf[offset..]);
+        if (n == 0) break;
+        offset += n;
+    }
+
+    return buf[0..offset];
 }
 
 fn compileShader(source: []const u8, kind: c.GLenum, label: []const u8) !c.GLuint {

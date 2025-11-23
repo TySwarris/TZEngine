@@ -83,9 +83,16 @@ pub fn build(b: *std.Build) void {
         }),
     });
 
-    exe.linkLibC();
+    // --- GLAD: include path + source file ---
+    exe.root_module.addIncludePath(b.path("deps/glad/include"));
+    exe.addCSourceFile(.{
+        .file = b.path("deps/glad/src/glad.c"),
+        .flags = &.{},
+    });
+
     exe.linkSystemLibrary("glfw");
     exe.linkSystemLibrary("GL");
+    exe.linkLibC();
 
     // This declares intent for the executable to be installed into the
     // install prefix when running `zig build` (i.e. when executing the default
