@@ -97,6 +97,24 @@ pub fn build(b: *std.Build) void {
     const zmath_dep = b.dependency("zmath", .{});
     exe.root_module.addImport("zmath", zmath_dep.module("root"));
 
+    const test_scene = b.addExecutable(.{
+        .name = "test_scene",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("src/test_scene_object.zig"),
+            .imports = &.{
+                .{ .name = "zmath", .module = zmath_dep.module("root") },
+            },
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+
+    b.installArtifact(test_scene);
+
+    const run_test_scene = b.step("run-test-scene", "Run test scene");
+    const run_cmd2 = b.addRunArtifact(test_scene);
+    run_test_scene.dependOn(&run_cmd2.step);
+
     // This declares intent for the executable to be installed into the
     // install prefix when running `zig build` (i.e. when executing the default
     // step). By default the install prefix is `zig-out/` but can be overridden
