@@ -67,7 +67,7 @@ pub fn main() !void {
     for (&objects, 0..) |*o, i| {
         var oToWorld = o.*.getWorldMatrix();
         const pos = oToWorld[3];
-        std.debug.print("Child {d} world posisiton = (x:{d},y:{d},z:{d})\n", .{
+        std.debug.print("Child {d} world posisiton = (x:{},y:{},z:{})\n", .{
             i + 1,
             pos[0],
             pos[1],
