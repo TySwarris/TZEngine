@@ -16,5 +16,7 @@ const Rock = struct {
         return r;
     }
 
-    fn draw(owner: *anyopaque, world: math.Mat, pass: u32) void {}
+    fn draw(owner: *anyopaque, world: math.Mat, pass: u32) void {
+        const self: *Rock = @ptrCast(@alignCast(owner));
+    }
 };
