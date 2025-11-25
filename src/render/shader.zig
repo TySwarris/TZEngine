@@ -1,4 +1,5 @@
 const std = @import("std");
+const math = @import("zmath");
 
 // Import OpenGL (and GLFW if you need it here)
 const c = @cImport({
@@ -38,6 +39,13 @@ pub const Shader = struct {
         return Shader{ .program = program };
     }
 
+    pub fn deinit(self: *Shader) void {
+        if (self.program != 0) {
+            c.glDeleteProgram(self.program);
+            self.program = 0;
+        }
+    }
+
     /// Use/bind the shader program.
     pub fn use(self: *Shader) void {
         c.glUseProgram(self.program);
@@ -62,6 +70,13 @@ pub const Shader = struct {
         const loc = c.glGetUniformLocation(self.program, name);
         if (loc == -1) return;
         c.glUniform1f(loc, value);
+    }
+
+    pub fn setMat4(self: *Shader, name: [:0]const u8, mat: math.Mat) void {
+        const loc = c.glGetUniformLocation(self.program, name);
+        if (loc == -1) return;
+        // zmath matrices are column-major like OpenGL
+        c.glUniformMatrix4fv(loc, 1, c.GL_FALSE, &mat[0][0]);
     }
 };
 

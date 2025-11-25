@@ -1,5 +1,8 @@
 const math = @import("zmath");
 const std = @import("std");
+const gl = @cImport({
+    @cInclude("GL/gl.h");
+});
 
 pub const SceneObject = struct {
     allocator: std.mem.Allocator,
@@ -52,12 +55,12 @@ pub const SceneObject = struct {
         return tempMatrix;
     }
 
-    pub fn draw(self: *SceneObject, parentMatrix: math.Mat, pass: u32) !void {
-        const world = math.Mul(parentMatrix, self.localMatrix);
+    pub fn draw(self: *SceneObject, parentMatrix: math.Mat, pass: u32) void {
+        const world = math.mul(parentMatrix, self.localMatrix);
 
         if (self.ownerDraw) |drawFn| {
-            if (self.owner) |ctx| {
-                drawFn(ctx, world, pass);
+            if (self.owner) |o| {
+                drawFn(o, world, pass);
             }
         }
 

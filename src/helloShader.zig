@@ -1,6 +1,7 @@
 const std = @import("std");
 const math = @import("zmath");
-//const SceneObjectMod = @import("core/SceneObject.zig");
+
+const Rock = @import("core/Rock.zig").Rock;
 
 const ShaderMod = @import("render/shader.zig");
 const Shader = ShaderMod.Shader;
@@ -55,58 +56,25 @@ pub fn main() !void {
     }
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
-    var shader = try Shader.initFromFiles(
-        allocator,
-        "shaders/vertexShader.glsl",
-        "shaders/fragmentShader.glsl",
-    );
-
-    var vertices = [_]f32{
-        //Positions                            //Colours
-        1.0,  1.0,  0.0, 1.0, 0.0, 0.0,
-        -1.0, -1.0, 0.0, 0.0, 1.0, 0.0,
-        1.0,  -1.0, 0.0, 0.0, 0.0, 1.0,
-    };
 
     //var _indicies = [_]u32{ 0, 1, 2 };
-
-    var VBO: gl.GLuint = 0;
-    var VAO: gl.GLuint = 0;
-
-    gl.glGenVertexArrays(1, &VAO);
-    gl.glGenBuffers(1, &VBO);
-
-    gl.glBindVertexArray(VAO);
-
-    gl.glBindBuffer(gl.GL_ARRAY_BUFFER, VBO);
-    gl.glBufferData(gl.GL_ARRAY_BUFFER, vertices.len * @sizeOf(f32), vertices[0..].ptr, gl.GL_STATIC_DRAW);
-
-    gl.glVertexAttribPointer(0, 3, gl.GL_FLOAT, gl.GL_FALSE, 6 * @sizeOf(f32), @as(?*const anyopaque, @ptrFromInt(0)));
-    gl.glEnableVertexAttribArray(0);
-
-    gl.glVertexAttribPointer(1, 3, gl.GL_FLOAT, gl.GL_FALSE, 6 * @sizeOf(f32), @as(?*const anyopaque, @ptrFromInt(3 * @sizeOf(f32))));
-    gl.glEnableVertexAttribArray(1);
-
-    gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0);
-
-    gl.glBindVertexArray(0);
+    var r: Rock = undefined;
+    try r.init(allocator);
+    //r.sceneObject.localMatrix = math.scaling(0.5, 0.5, 0);
 
     while (glfw.glfwWindowShouldClose(window) == 0) {
         processInput(window);
 
         gl.glClearColor(0.2, 0.3, 0.3, 1.0);
         gl.glClear(gl.GL_COLOR_BUFFER_BIT);
-        shader.use();
 
-        gl.glBindVertexArray(VAO);
-        gl.glDrawArrays(gl.GL_TRIANGLES, 0, 3);
-
+        r.sceneObject.draw(r.sceneObject.localMatrix, 0);
+        r.sceneObject.localMatrix = math.mul(r.sceneObject.localMatrix, math.rotationZ(0.02));
         glfw.glfwSwapBuffers(window);
         glfw.glfwPollEvents();
     }
-    gl.glDeleteVertexArrays(1, &VAO);
-    gl.glDeleteBuffers(1, &VBO);
 
+    r.deinit();
     glfw.glfwTerminate();
     return;
 }
