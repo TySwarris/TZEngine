@@ -8,6 +8,9 @@ pub const SceneObject = struct {
     children: std.ArrayList(*SceneObject),
     parent: ?*SceneObject, //nullable parent
 
+    owner: ?*anyopaque = null,
+    ownerDraw: ?*const fn (owner: *anyopaque, world: math.Mat, pass: u32) void = null,
+
     pub fn init(allocator: std.mem.Allocator) SceneObject {
         return .{
             .allocator = allocator,
@@ -47,5 +50,19 @@ pub const SceneObject = struct {
             current = obj.parent;
         }
         return tempMatrix;
+    }
+
+    pub fn draw(self: *SceneObject, parentMatrix: math.Mat, pass: u32) !void {
+        const world = math.Mul(parentMatrix, self.localMatrix);
+
+        if (self.ownerDraw) |drawFn| {
+            if (self.owner) |ctx| {
+                drawFn(ctx, world, pass);
+            }
+        }
+
+        for (self.children.items) |child| {
+            child.draw(world, pass);
+        }
     }
 };
