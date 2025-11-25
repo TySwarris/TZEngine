@@ -60,8 +60,12 @@ pub fn main() !void {
     //var _indicies = [_]u32{ 0, 1, 2 };
     var r: Rock = undefined;
     try r.init(allocator);
-    //r.sceneObject.localMatrix = math.scaling(0.5, 0.5, 0);
+    r.sceneObject.localMatrix = math.mul(r.sceneObject.localMatrix, math.scaling(0.5, 0.5, 0));
 
+    var r2: Rock = undefined;
+    try r2.init(allocator);
+    try r2.sceneObject.setParent(&r.sceneObject);
+    r2.sceneObject.localMatrix = math.mul(r.sceneObject.localMatrix, math.scaling(0.2, 0.2, 0));
     while (glfw.glfwWindowShouldClose(window) == 0) {
         processInput(window);
 
@@ -70,6 +74,7 @@ pub fn main() !void {
 
         r.sceneObject.draw(r.sceneObject.localMatrix, 0);
         r.sceneObject.localMatrix = math.mul(r.sceneObject.localMatrix, math.rotationZ(0.02));
+        r2.sceneObject.localMatrix = math.mul(r2.sceneObject.localMatrix, math.translation(0.01, 0, 0));
         glfw.glfwSwapBuffers(window);
         glfw.glfwPollEvents();
     }
