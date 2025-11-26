@@ -72,8 +72,10 @@ pub const Shader = struct {
         c.glUniform1f(loc, value);
     }
 
-    pub fn setMat4(self: *Shader, name: [:0]const u8, mat: math.Mat) void {
-        const loc = c.glGetUniformLocation(self.program, name);
+    pub fn setMat4(self: *Shader, name: []const u8, mat: math.Mat) void {
+        const cname: [*:0]const u8 = @ptrCast(name.ptr);
+
+        const loc = c.glGetUniformLocation(self.program, cname);
         if (loc == -1) return;
         // zmath matrices are column-major like OpenGL
         c.glUniformMatrix4fv(loc, 1, c.GL_FALSE, &mat[0][0]);

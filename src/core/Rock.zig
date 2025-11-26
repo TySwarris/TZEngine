@@ -59,6 +59,9 @@ pub const Rock = struct {
         self.shader.setMat4("u_mvpMatrix", world);
 
         gl.glBindVertexArray(self.vao);
+
+        std.debug.print("world tx,ty = {d}, {d}\n", .{ world[3][0], world[3][1] });
+
         gl.glDrawArrays(gl.GL_TRIANGLES, 0, 3);
     }
 

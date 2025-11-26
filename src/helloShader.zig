@@ -60,12 +60,17 @@ pub fn main() !void {
     //var _indicies = [_]u32{ 0, 1, 2 };
     var r: Rock = undefined;
     try r.init(allocator);
+    r.sceneObject.localMatrix = math.identity();
     r.sceneObject.localMatrix = math.mul(r.sceneObject.localMatrix, math.scaling(0.5, 0.5, 0));
 
     var r2: Rock = undefined;
     try r2.init(allocator);
     try r2.sceneObject.setParent(&r.sceneObject);
+    r2.sceneObject.localMatrix = math.identity();
     r2.sceneObject.localMatrix = math.mul(r2.sceneObject.localMatrix, math.scaling(0.2, 0.2, 0));
+    r2.sceneObject.localMatrix = math.mul(r2.sceneObject.localMatrix, math.translation(0.4, 0, 0));
+
+    //var x = 0;
     while (glfw.glfwWindowShouldClose(window) == 0) {
         processInput(window);
 
@@ -73,9 +78,11 @@ pub fn main() !void {
         gl.glClear(gl.GL_COLOR_BUFFER_BIT);
 
         r.sceneObject.draw(math.identity(), 0);
-        r.sceneObject.localMatrix = math.mul(math.rotationZ(0.002), r.sceneObject.localMatrix);
-        r2.sceneObject.localMatrix = math.mul(math.translation(0.005, 0, 0), r2.sceneObject.localMatrix);
 
+        r.sceneObject.localMatrix = math.mul(r.sceneObject.localMatrix, math.rotationZ(0.002));
+        r2.sceneObject.localMatrix = math.mul(r2.sceneObject.localMatrix, math.translation(0.005, 0, 0));
+
+        std.debug.print("r2 local tx,ty = {d}, {d}\n", .{ r2.sceneObject.localMatrix[3][0], r2.sceneObject.localMatrix[3][1] });
         glfw.glfwSwapBuffers(window);
         glfw.glfwPollEvents();
     }
