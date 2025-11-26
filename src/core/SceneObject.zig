@@ -44,15 +44,15 @@ pub const SceneObject = struct {
     }
 
     pub fn getWorldMatrix(self: *SceneObject) math.Mat {
-        var tempMatrix = math.identity();
+        var world = self.localMatrix;
 
-        var current: ?*SceneObject = self;
+        var p = self.parent;
 
-        while (current) |obj| {
-            tempMatrix = math.mul(obj.localMatrix, tempMatrix);
-            current = obj.parent;
+        while (p) |parent| {
+            world = math.mul(parent.localMatrix, world);
+            p = parent.parent;
         }
-        return tempMatrix;
+        return world;
     }
 
     pub fn draw(self: *SceneObject, parentMatrix: math.Mat, pass: u32) void {

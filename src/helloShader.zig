@@ -65,16 +65,17 @@ pub fn main() !void {
     var r2: Rock = undefined;
     try r2.init(allocator);
     try r2.sceneObject.setParent(&r.sceneObject);
-    r2.sceneObject.localMatrix = math.mul(r.sceneObject.localMatrix, math.scaling(0.2, 0.2, 0));
+    r2.sceneObject.localMatrix = math.mul(r2.sceneObject.localMatrix, math.scaling(0.2, 0.2, 0));
     while (glfw.glfwWindowShouldClose(window) == 0) {
         processInput(window);
 
         gl.glClearColor(0.2, 0.3, 0.3, 1.0);
         gl.glClear(gl.GL_COLOR_BUFFER_BIT);
 
-        r.sceneObject.draw(r.sceneObject.localMatrix, 0);
-        r.sceneObject.localMatrix = math.mul(r.sceneObject.localMatrix, math.rotationZ(0.02));
-        r2.sceneObject.localMatrix = math.mul(r2.sceneObject.localMatrix, math.translation(0.01, 0, 0));
+        r.sceneObject.draw(math.identity(), 0);
+        r.sceneObject.localMatrix = math.mul(math.rotationZ(0.002), r.sceneObject.localMatrix);
+        r2.sceneObject.localMatrix = math.mul(math.translation(0.005, 0, 0), r2.sceneObject.localMatrix);
+
         glfw.glfwSwapBuffers(window);
         glfw.glfwPollEvents();
     }
