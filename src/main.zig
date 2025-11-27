@@ -1,7 +1,8 @@
 const std = @import("std");
 const math = @import("zmath");
 
-const Rock = @import("sceneObjects//Rock.zig").Rock;
+const Rock = @import("sceneObjects/Rock.zig").Rock;
+const Camera = @import("core/Camera.zig").Camera;
 
 const ShaderMod = @import("render/shader.zig");
 const Shader = ShaderMod.Shader;
@@ -58,6 +59,8 @@ pub fn main() !void {
     const allocator = gpa.allocator();
 
     //var _indicies = [_]u32{ 0, 1, 2 };
+    var camera: Camera = Camera.init(allocator, 3.0);
+    camera.distance = 2.0;
     var r: Rock = undefined;
     try r.init(allocator);
     r.sceneObject.localMatrix = math.identity();
