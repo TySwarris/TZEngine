@@ -1,5 +1,8 @@
 const std = @import("std");
 const math = @import("zmath");
+const glfw = @cImport({
+    @cInclude("GLFW/glfw3.h");
+});
 const Camera = @import("../../core/Camera.zig").Camera;
 
 pub const OrthographicCamera = struct {
@@ -17,6 +20,22 @@ pub const OrthographicCamera = struct {
             .near = near,
             .far = far,
         };
+    }
+
+    pub fn update(self: *OrthographicCamera, window: ?*glfw.GLFWwindow) void {
+        const speed: f32 = 0.02;
+        if (glfw.glfwGetKey(window, glfw.GLFW_KEY_UP) == glfw.GLFW_PRESS) {
+            self.cam.sceneObject.translateLocal(0, speed, 0);
+        }
+        if (glfw.glfwGetKey(window, glfw.GLFW_KEY_DOWN) == glfw.GLFW_PRESS) {
+            self.cam.sceneObject.translateLocal(0, -speed, 0);
+        }
+        if (glfw.glfwGetKey(window, glfw.GLFW_KEY_LEFT) == glfw.GLFW_PRESS) {
+            self.cam.sceneObject.translateLocal(-speed, 0.0, 0);
+        }
+        if (glfw.glfwGetKey(window, glfw.GLFW_KEY_RIGHT) == glfw.GLFW_PRESS) {
+            self.cam.sceneObject.translateLocal(0, speed, 0);
+        }
     }
 
     pub fn getProjectionMatrix(self: *const OrthographicCamera) math.Mat {
