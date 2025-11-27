@@ -46,13 +46,14 @@ pub const SceneObject = struct {
         var p = self.parent;
 
         while (p) |parent| {
-            world = math.mul(parent.localMatrix, world);
+            world = math.mul(world, parent.localMatrix);
             p = parent.parent;
         }
         return world;
     }
 
     pub fn draw(self: *SceneObject, parentMatrix: math.Mat, pass: u32) void {
+        // World = Model/localMatrix * parentMatrix, zmath has vector major so its flipped.
         const world = math.mul(self.localMatrix, parentMatrix);
 
         if (self.ownerDraw) |drawFn| {
@@ -64,5 +65,25 @@ pub const SceneObject = struct {
         for (self.children.items) |child| {
             child.draw(world, pass);
         }
+    }
+
+    pub fn translateLocal(self: *SceneObject, x: f32, y: f32, z: f32) void {
+        self.localMatrix = math.mul(self.localMatrix, math.translation(x, y, z));
+    }
+
+    pub fn rotateZLocal(self: *SceneObject, angle: f32) void {
+        self.localMatrix = math.mul(self.localMatrix, math.rotationZ(angle));
+    }
+
+    pub fn rotateYLocal(self: *SceneObject, angle: f32) void {
+        self.localMatrix = math.mul(self.localMatrix, math.rotationY(angle));
+    }
+
+    pub fn rotateXLocal(self: *SceneObject, angle: f32) void {
+        self.localMatrix = math.mul(self.localMatrix, math.rotationX(angle));
+    }
+
+    pub fn scaleLocal(self: *SceneObject, x: f32, y: f32, z: f32) void {
+        self.localMatrix = math.mul(self.localMatrix, math.scaling(x, y, z));
     }
 };
