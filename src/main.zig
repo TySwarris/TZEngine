@@ -2,13 +2,11 @@ const std = @import("std");
 const math = @import("zmath");
 
 const Rock = @import("sceneObjects/Rock.zig").Rock;
-const Camera = @import("core/Camera.zig").Camera;
+const Camera = @import("sceneObjects/cameras/OrthographicCamera.zig").OrthographicCamera;
 
 const ShaderMod = @import("render/shader.zig");
 const Shader = ShaderMod.Shader;
-const glfw = @cImport({
-    @cInclude("GLFW/glfw3.h");
-});
+const glfw = @import("glfw.zig").glfw;
 
 const gl = @cImport({
     @cInclude("glad/glad.h");
@@ -59,8 +57,8 @@ pub fn main() !void {
     const allocator = gpa.allocator();
 
     //var _indicies = [_]u32{ 0, 1, 2 };
-    var camera: Camera = Camera.init(allocator, 3.0);
-    camera.distance = 2.0;
+    var camera: Camera = Camera.init(allocator, 2.0, 4.0, 4.0, 0.5, 10.0);
+
     var r: Rock = undefined;
     try r.init(allocator);
     r.sceneObject.localMatrix = math.identity();
@@ -77,10 +75,15 @@ pub fn main() !void {
     while (glfw.glfwWindowShouldClose(window) == 0) {
         processInput(window);
 
+        camera.update(window);
+        const view = camera.cam.getViewMatrix();
+        const proj = camera.getProjectionMatrix();
+        const viewProj = math.mul(view, proj);
+
         gl.glClearColor(0.2, 0.3, 0.3, 1.0);
         gl.glClear(gl.GL_COLOR_BUFFER_BIT);
 
-        r.sceneObject.draw(math.identity(), 0);
+        r.sceneObject.draw(viewProj, 0);
 
         r.sceneObject.rotateZLocal(0.02);
         //r.sceneObject.rotateYLocal(0.008);

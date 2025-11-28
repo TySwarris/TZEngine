@@ -40,7 +40,7 @@ pub const SceneObject = struct {
         }
     }
 
-    pub fn getWorldMatrix(self: *SceneObject) math.Mat {
+    pub fn getWorldMatrix(self: *const SceneObject) math.Mat {
         var world = self.localMatrix;
 
         var p = self.parent;

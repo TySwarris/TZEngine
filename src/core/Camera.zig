@@ -9,11 +9,13 @@ pub const Camera = struct {
     angle: math.Vec,
 
     pub fn init(allocator: std.mem.Allocator, distance: f32) Camera {
-        return .{
+        var cam = Camera{
             .sceneObject = SceneObject.init(allocator),
             .distance = distance,
             .angle = math.f32x4(0, 0, 0, 0),
         };
+        cam.sceneObject.translateLocal(0, 0, distance);
+        return cam;
     }
 
     pub fn getViewMatrix(self: *const Camera) math.Mat {
