@@ -26,10 +26,12 @@ pub const Rock = struct {
 
         const vertices = [_]f32{
             //Positions                            //Colours
-            1.0,  1.0,  0.0, 1.0, 0.0, 0.0,
-            -1.0, -1.0, 0.0, 0.0, 1.0, 0.0,
-            1.0,  -1.0, 0.0, 0.0, 0.0, 1.0,
+            1.0,  1.0,  0.0,
+            -1.0, -1.0, 0.0,
+            1.0,  -1.0, 0.0,
         };
+
+        //const
 
         gl.glGenVertexArrays(1, &self.vao);
         gl.glGenBuffers(1, &self.vbo);
@@ -39,11 +41,8 @@ pub const Rock = struct {
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vbo);
         gl.glBufferData(gl.GL_ARRAY_BUFFER, vertices.len * @sizeOf(f32), vertices[0..].ptr, gl.GL_STATIC_DRAW);
 
-        gl.glVertexAttribPointer(0, 3, gl.GL_FLOAT, gl.GL_FALSE, 6 * @sizeOf(f32), @as(?*const anyopaque, @ptrFromInt(0)));
+        gl.glVertexAttribPointer(0, 3, gl.GL_FLOAT, gl.GL_FALSE, 3 * @sizeOf(f32), @as(?*const anyopaque, @ptrFromInt(0)));
         gl.glEnableVertexAttribArray(0);
-
-        gl.glVertexAttribPointer(1, 3, gl.GL_FLOAT, gl.GL_FALSE, 6 * @sizeOf(f32), @as(?*const anyopaque, @ptrFromInt(3 * @sizeOf(f32))));
-        gl.glEnableVertexAttribArray(1);
 
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0);
 
@@ -57,6 +56,7 @@ pub const Rock = struct {
         self.shader.use();
 
         self.shader.setMat4("u_mvpMatrix", world);
+        //self.shader.setFloat
 
         gl.glBindVertexArray(self.vao);
 
