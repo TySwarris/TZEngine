@@ -1,5 +1,6 @@
 const SceneObject = @import("../core/SceneObject.zig").SceneObject;
 const Shader = @import("../render/shader.zig").Shader;
+const GLBuffers = @import("../render/GLBuffers.zig");
 
 const math = @import("zmath");
 const std = @import("std");
@@ -31,8 +32,6 @@ pub const Rock = struct {
             1.0,  -1.0, 0.0,
         };
 
-        //const
-
         gl.glGenVertexArrays(1, &self.vao);
         gl.glGenBuffers(1, &self.vbo);
 
@@ -42,10 +41,10 @@ pub const Rock = struct {
         gl.glBufferData(gl.GL_ARRAY_BUFFER, vertices.len * @sizeOf(f32), vertices[0..].ptr, gl.GL_STATIC_DRAW);
 
         gl.glVertexAttribPointer(0, 3, gl.GL_FLOAT, gl.GL_FALSE, 3 * @sizeOf(f32), @as(?*const anyopaque, @ptrFromInt(0)));
+
         gl.glEnableVertexAttribArray(0);
 
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0);
-
         gl.glBindVertexArray(0);
     }
 
@@ -56,10 +55,11 @@ pub const Rock = struct {
         self.shader.use();
 
         self.shader.setMat4("u_mvpMatrix", world);
-        //self.shader.setFloat
+        self.shader.setVec3("u_color", .{ 0.8, 0.2, 0.2 });
 
         gl.glBindVertexArray(self.vao);
 
+        //gl.glDrawElements(gl.GL_FRONT_AND_BACK, 3, gl.GL_UNSIGNED_INT, 0);
         gl.glDrawArrays(gl.GL_TRIANGLES, 0, 3);
     }
 

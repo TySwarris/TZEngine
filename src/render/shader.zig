@@ -52,32 +52,49 @@ pub const Shader = struct {
     }
 
     /// Set a bool uniform (name must be a C-string literal, e.g. c"uFlag")
-    pub fn setBool(self: *Shader, name: [:0]const u8, value: bool) void {
+    pub fn setBool(self: *Shader, name: [*:0]const u8, value: bool) void {
         const loc = c.glGetUniformLocation(self.program, name);
         if (loc == -1) return; // uniform not found; ignore
         c.glUniform1i(loc, if (value) 1 else 0);
     }
 
     /// Set an int uniform
-    pub fn setInt(self: *Shader, name: [:0]const u8, value: i32) void {
+    pub fn setInt(self: *Shader, name: [*:0]const u8, value: i32) void {
         const loc = c.glGetUniformLocation(self.program, name);
         if (loc == -1) return;
         c.glUniform1i(loc, value);
     }
 
     /// Set a float uniform
-    pub fn setFloat(self: *Shader, name: [:0]const u8, value: f32) void {
+    pub fn setFloat(self: *Shader, name: [*:0]const u8, value: f32) void {
         const loc = c.glGetUniformLocation(self.program, name);
         if (loc == -1) return;
         c.glUniform1f(loc, value);
     }
 
-    pub fn setMat4(self: *Shader, name: []const u8, mat: math.Mat) void {
-        const cname: [*:0]const u8 = @ptrCast(name.ptr);
-
-        const loc = c.glGetUniformLocation(self.program, cname);
+    pub fn setVec2(self: *Shader, name: [*:0]const u8, v: [2]f32) void {
+        const loc = c.glGetUniformLocation(self.program, name);
         if (loc == -1) return;
-        // zmath matrices are column-major like OpenGL
+        c.glUniform2f(loc, v[0], v[1]);
+    }
+
+    pub fn setVec3(self: *Shader, name: [*:0]const u8, v: [3]f32) void {
+        const loc = c.glGetUniformLocation(self.program, name);
+        if (loc == -1) return;
+        c.glUniform3f(loc, v[0], v[1], v[2]);
+    }
+
+    pub fn setVec4(self: *Shader, name: [*:0]const u8, v: [4]f32) void {
+        const loc = c.glGetUniformLocation(self.program, name);
+        if (loc == -1) return;
+        c.glUniform4f(loc, v[0], v[1], v[2], v[3]);
+    }
+
+    pub fn setMat4(self: *Shader, name: [*:0]const u8, mat: math.Mat) void {
+        const loc = c.glGetUniformLocation(self.program, name);
+
+        if (loc == -1) return;
+        // zmath matrices are row major but laid out compatibly for for OpenGl here
         c.glUniformMatrix4fv(loc, 1, c.GL_FALSE, &mat[0][0]);
     }
 };
