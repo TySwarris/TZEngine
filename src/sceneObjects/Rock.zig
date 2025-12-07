@@ -32,19 +32,12 @@ pub const Rock = struct {
             1.0,  -1.0, 0.0,
         };
 
-        gl.glGenVertexArrays(1, &self.vao);
-        gl.glGenBuffers(1, &self.vbo);
-
+        self.vao = GLBuffers.createVAO();
         gl.glBindVertexArray(self.vao);
 
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vbo);
-        gl.glBufferData(gl.GL_ARRAY_BUFFER, vertices.len * @sizeOf(f32), vertices[0..].ptr, gl.GL_STATIC_DRAW);
+        self.vbo = GLBuffers.createVBO(&vertices);
+        GLBuffers.defineVertexAttribute(0, 3, 3 * @sizeOf(f32), 0);
 
-        gl.glVertexAttribPointer(0, 3, gl.GL_FLOAT, gl.GL_FALSE, 3 * @sizeOf(f32), @as(?*const anyopaque, @ptrFromInt(0)));
-
-        gl.glEnableVertexAttribArray(0);
-
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0);
         gl.glBindVertexArray(0);
     }
 
