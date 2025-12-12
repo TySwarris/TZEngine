@@ -12,6 +12,8 @@ const gl = @cImport({
     @cInclude("glad/glad.h");
 });
 
+const SCritter = @import("sceneObjects/SquareCritter.zig").SquareCritter;
+
 fn zigGlfwLoader(name: [*c]const u8) callconv(.c) ?*anyopaque {
     const proc_opt = glfw.glfwGetProcAddress(name);
     if (proc_opt) |p| {
@@ -59,19 +61,24 @@ pub fn main() !void {
     //var _indicies = [_]u32{ 0, 1, 2 };
     var camera: Camera = Camera.init(allocator, 2.0, 4.0, 4.0, 0.5, 10.0);
 
-    var r: Rock = undefined;
-    try r.init(allocator);
-    r.sceneObject.localMatrix = math.identity();
-    r.sceneObject.scaleLocal(0.5, 0.5, 1);
+    //var r: Rock = undefined;
+    //try r.init(allocator);
+    //r.sceneObject.localMatrix = math.identity();
+    //r.sceneObject.scaleLocal(0.5, 0.5, 1);
 
-    var r2: Rock = undefined;
-    try r2.init(allocator);
-    try r2.sceneObject.setParent(&r.sceneObject);
-    r2.sceneObject.localMatrix = math.identity();
-    r2.sceneObject.scaleLocal(0.2, 0.2, 0);
-    r2.sceneObject.translateLocal(-1, 0.5, 0);
-
+    //var r2: Rock = undefined;
+    //try r2.init(allocator);
+    // try r2.sceneObject.setParent(&r.sceneObject);
+    // r2.sceneObject.localMatrix = math.identity();
+    // r2.sceneObject.scaleLocal(0.2, 0.2, 0);
+    // r2.sceneObject.translateLocal(-1, 0.5, 0);
+    //
     //var x = 0;
+    //
+    var critter1: SCritter = undefined;
+    try critter1.init(allocator);
+    defer critter1.deinit();
+
     while (glfw.glfwWindowShouldClose(window) == 0) {
         processInput(window);
 
@@ -83,30 +90,32 @@ pub fn main() !void {
         gl.glClearColor(0.2, 0.3, 0.3, 1.0);
         gl.glClear(gl.GL_COLOR_BUFFER_BIT);
 
-        r.sceneObject.draw(viewProj, 0);
+        critter1.sceneObject.draw(viewProj, 1);
 
-        r.sceneObject.rotateZLocal(0.02);
+        // r.sceneObject.draw(viewProj, 0);
+        //
+        // r.sceneObject.rotateZLocal(0.02);
         //r.sceneObject.rotateYLocal(0.008);
         //r2.sceneObject.localMatrix = math.mul(r2.sceneObject.localMatrix, math.translation(0.005, 0, 0));
         //
-        if (glfw.glfwGetKey(window, glfw.GLFW_KEY_W) == glfw.GLFW_PRESS) {
-            r2.sceneObject.translateLocal(0, 0.01, 0);
-        }
-
-        if (glfw.glfwGetKey(window, glfw.GLFW_KEY_S) == glfw.GLFW_PRESS) {
-            r2.sceneObject.translateLocal(0, -0.01, 0);
-        }
-
-        std.debug.print("r2 local tx,ty = {d}, {d}\n", .{ r2.sceneObject.localMatrix[3][0], r2.sceneObject.localMatrix[3][1] });
-
-        const world = r2.sceneObject.getWorldMatrix();
-        std.debug.print("r2 WORLD tx,ty = {d}, {d}\n", .{ world[3][0], world[3][1] });
+        // if (glfw.glfwGetKey(window, glfw.GLFW_KEY_W) == glfw.GLFW_PRESS) {
+        //     r2.sceneObject.translateLocal(0, 0.01, 0);
+        // }
+        //
+        // if (glfw.glfwGetKey(window, glfw.GLFW_KEY_S) == glfw.GLFW_PRESS) {
+        //     r2.sceneObject.translateLocal(0, -0.01, 0);
+        // }
+        //
+        // std.debug.print("r2 local tx,ty = {d}, {d}\n", .{ r2.sceneObject.localMatrix[3][0], r2.sceneObject.localMatrix[3][1] });
+        //
+        // const world = r2.sceneObject.getWorldMatrix();
+        // std.debug.print("r2 WORLD tx,ty = {d}, {d}\n", .{ world[3][0], world[3][1] });
 
         glfw.glfwSwapBuffers(window);
         glfw.glfwPollEvents();
     }
 
-    r.deinit();
+    // r.deinit();
     glfw.glfwTerminate();
     return;
 }

@@ -19,9 +19,11 @@ pub fn createVBO(data: []const f32) gl.GLuint {
 
 pub fn createEBO(indices: []const u32) gl.GLuint {
     var id: gl.GLuint = 0;
+    const byteSize: gl.GLsizeiptr = @intCast(indices.len * @sizeOf(u32));
     gl.glGenBuffers(1, &id);
     gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, id);
-    gl.glBufferData(gl.GL_ELEMENT_ARRAY_BUFFER, indices.len * @sizeOf(u32), indices.ptr, gl.GL_STATIC_DRAW);
+
+    gl.glBufferData(gl.GL_ELEMENT_ARRAY_BUFFER, byteSize, indices.ptr, gl.GL_STATIC_DRAW);
     return id;
 }
 

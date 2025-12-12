@@ -1,0 +1,90 @@
+const SceneObject = @import("../core/SceneObject.zig").SceneObject;
+const Shader = @import("../render/shader.zig").Shader;
+const GLBuffers = @import("../render/GLBuffers.zig");
+
+const math = @import("zmath");
+const std = @import("std");
+const gl = @cImport({
+    @cInclude("glad/glad.h");
+});
+pub const SquareCritter = struct {
+    sceneObject: SceneObject,
+    allocator: std.mem.Allocator,
+    shader: Shader,
+    vao: gl.GLuint = 0,
+    vbo: gl.GLuint = 0,
+    ebo: gl.GLuint = 0,
+
+    pub fn init(self: *SquareCritter, allocator: std.mem.Allocator) !void {
+        self.sceneObject = SceneObject.init(allocator);
+        self.allocator = allocator;
+        self.sceneObject.owner = self;
+        self.sceneObject.ownerDraw = draw;
+        self.shader = try Shader.initFromFiles(
+            allocator,
+            "shaders/vertexShader.glsl",
+            "shaders/fragmentShader.glsl",
+        );
+
+        const vertices = [_]f32{
+            //Positions
+            0.5,  0.5,  0.0,
+            -0.5, 0.5,  0.0,
+            -0.5, -0.5, 0.0,
+            0.5,  -0.5, 0.0,
+        };
+
+        const indices = [_]u32{
+            0, 1, 2,
+            0, 2, 3,
+        };
+
+        self.vao = GLBuffers.createVAO();
+        gl.glBindVertexArray(self.vao);
+
+        self.vbo = GLBuffers.createVBO(&vertices);
+        GLBuffers.defineVertexAttribute(0, 3, 3 * @sizeOf(f32), 0);
+
+        self.ebo = GLBuffers.createEBO(&indices);
+
+        gl.glBindVertexArray(0);
+    }
+
+    fn draw(owner: *anyopaque, world: math.Mat, pass: u32) void {
+        _ = pass;
+
+        const self: *SquareCritter = @ptrCast(@alignCast(owner));
+        self.shader.use();
+
+        self.shader.setMat4("u_mvpMatrix", world);
+        self.shader.setVec3("u_color", .{ 0.8, 0.2, 0.2 });
+
+        gl.glBindVertexArray(self.vao);
+        gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE);
+        gl.glDrawElements(gl.GL_TRIANGLES, 6, gl.GL_UNSIGNED_INT, null);
+        //gl.glDrawArrays(gl.GL_TRIANGLES, 0, 6);
+        gl.glPolygonMode(gl.GL_TRIANGLES, gl.GL_FILL);
+    }
+
+    pub fn deinit(self: *SquareCritter) void {
+        // Delete GL vertex array + buffers
+        if (self.vao != 0) {
+            gl.glDeleteVertexArrays(1, &self.vao);
+            self.vao = 0;
+        }
+        if (self.vbo != 0) {
+            gl.glDeleteBuffers(1, &self.vbo);
+            self.vbo = 0;
+        }
+        if (self.ebo != 0) {
+            gl.glDeleteBuffers(1, &self.ebo);
+            self.ebo = 0;
+        }
+
+        // Deinit shader (assuming Shader has its own deinit)
+        self.shader.deinit();
+
+        // Deinit the embedded SceneObject
+        self.sceneObject.deinit();
+    }
+};
