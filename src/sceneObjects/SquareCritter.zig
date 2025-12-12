@@ -15,6 +15,8 @@ pub const SquareCritter = struct {
     vbo: gl.GLuint = 0,
     ebo: gl.GLuint = 0,
 
+    color: [3]f32 = undefined,
+
     pub fn init(self: *SquareCritter, allocator: std.mem.Allocator) !void {
         self.sceneObject = SceneObject.init(allocator);
         self.allocator = allocator;
@@ -25,6 +27,7 @@ pub const SquareCritter = struct {
             "shaders/vertexShader.glsl",
             "shaders/fragmentShader.glsl",
         );
+        self.color = .{ 0.8, 0.2, 0.2 };
 
         const vertices = [_]f32{
             //Positions
@@ -57,13 +60,13 @@ pub const SquareCritter = struct {
         self.shader.use();
 
         self.shader.setMat4("u_mvpMatrix", world);
-        self.shader.setVec3("u_color", .{ 0.8, 0.2, 0.2 });
+        self.shader.setVec3("u_color", self.color);
 
         gl.glBindVertexArray(self.vao);
-        gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE);
+        gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_FILL);
         gl.glDrawElements(gl.GL_TRIANGLES, 6, gl.GL_UNSIGNED_INT, null);
-        //gl.glDrawArrays(gl.GL_TRIANGLES, 0, 6);
-        gl.glPolygonMode(gl.GL_TRIANGLES, gl.GL_FILL);
+
+        //gl.glBindVertexArray(0);
     }
 
     pub fn deinit(self: *SquareCritter) void {

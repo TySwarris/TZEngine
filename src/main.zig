@@ -77,7 +77,11 @@ pub fn main() !void {
     //
     var critter1: SCritter = undefined;
     try critter1.init(allocator);
-    defer critter1.deinit();
+    //defer critter1.deinit();
+
+    // var change0: f32 = 0.001;
+    // var change1: f32 = 0.01;
+    // var change2: f32 = 0.005;
 
     while (glfw.glfwWindowShouldClose(window) == 0) {
         processInput(window);
@@ -91,6 +95,19 @@ pub fn main() !void {
         gl.glClear(gl.GL_COLOR_BUFFER_BIT);
 
         critter1.sceneObject.draw(viewProj, 1);
+
+        // if (critter1.color[0] >= 0.9 or critter1.color[0] <= 0.1) {
+        //     change0 *= -1;
+        // }
+        // critter1.color[0] += change0;
+        // if (critter1.color[1] >= 0.9 or critter1.color[1] <= 0.1) {
+        //     change1 *= -1;
+        // }
+        // critter1.color[1] += change1;
+        // if (critter1.color[2] >= 0.9 or critter1.color[2] <= 0.1) {
+        //     change2 *= -1;
+        // }
+        // critter1.color[2] += change2;
 
         // r.sceneObject.draw(viewProj, 0);
         //
@@ -115,7 +132,7 @@ pub fn main() !void {
         glfw.glfwPollEvents();
     }
 
-    // r.deinit();
+    critter1.deinit();
     glfw.glfwTerminate();
     return;
 }
