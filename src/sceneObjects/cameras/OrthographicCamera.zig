@@ -20,19 +20,19 @@ pub const OrthographicCamera = struct {
         };
     }
 
-    pub fn update(self: *OrthographicCamera, window: ?*glfw.GLFWwindow) void {
-        const speed: f32 = 0.02;
+    pub fn update(self: *OrthographicCamera, window: ?*glfw.GLFWwindow, dt: f32) void {
+        const speed: f32 = 1.0;
         if (glfw.glfwGetKey(window, glfw.GLFW_KEY_UP) == glfw.GLFW_PRESS) {
-            self.cam.sceneObject.translateLocal(0, speed, 0);
+            self.cam.sceneObject.translateLocal(0, speed * dt, 0);
         }
         if (glfw.glfwGetKey(window, glfw.GLFW_KEY_DOWN) == glfw.GLFW_PRESS) {
-            self.cam.sceneObject.translateLocal(0, -speed, 0);
+            self.cam.sceneObject.translateLocal(0, -speed * dt, 0);
         }
         if (glfw.glfwGetKey(window, glfw.GLFW_KEY_LEFT) == glfw.GLFW_PRESS) {
-            self.cam.sceneObject.translateLocal(-speed, 0.0, 0);
+            self.cam.sceneObject.translateLocal(-speed * dt, 0.0, 0);
         }
         if (glfw.glfwGetKey(window, glfw.GLFW_KEY_RIGHT) == glfw.GLFW_PRESS) {
-            self.cam.sceneObject.translateLocal(speed, 0, 0);
+            self.cam.sceneObject.translateLocal(speed * dt, 0, 0);
         }
     }
 

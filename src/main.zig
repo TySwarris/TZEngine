@@ -58,75 +58,44 @@ pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
 
-    //var _indicies = [_]u32{ 0, 1, 2 };
     var camera: Camera = Camera.init(allocator, 2.0, 4.0, 4.0, 0.5, 10.0);
 
-    //var r: Rock = undefined;
-    //try r.init(allocator);
-    //r.sceneObject.localMatrix = math.identity();
-    //r.sceneObject.scaleLocal(0.5, 0.5, 1);
-
-    //var r2: Rock = undefined;
-    //try r2.init(allocator);
-    // try r2.sceneObject.setParent(&r.sceneObject);
-    // r2.sceneObject.localMatrix = math.identity();
-    // r2.sceneObject.scaleLocal(0.2, 0.2, 0);
-    // r2.sceneObject.translateLocal(-1, 0.5, 0);
-    //
-    //var x = 0;
-    //
     var critter1: SCritter = undefined;
     try critter1.init(allocator);
-    //defer critter1.deinit();
 
-    // var change0: f32 = 0.001;
-    // var change1: f32 = 0.01;
-    // var change2: f32 = 0.005;
+    var timer = try std.time.Timer.start();
 
+    var frames: f32 = 0.0;
+    var timeAccum: f32 = 0.0;
     while (glfw.glfwWindowShouldClose(window) == 0) {
+        const dt_ns: f32 = @floatFromInt(timer.lap());
+        const dt: f32 = dt_ns / 1_000_000_000;
+        //std.debug.print("seconds since last frame: {d}\n", .{dt});
+        // std.debug.print("fps: {d}\n", .{1 / dt});
         processInput(window);
 
-        camera.update(window);
+        camera.update(window, dt);
         const view = camera.cam.getViewMatrix();
         const proj = camera.getProjectionMatrix();
-        const viewProj = math.mul(view, proj);
+        const viewProj: [4]@Vector(4, f32) = math.mul(view, proj);
 
         gl.glClearColor(0.2, 0.3, 0.3, 1.0);
         gl.glClear(gl.GL_COLOR_BUFFER_BIT);
 
         critter1.sceneObject.draw(viewProj, 1);
 
-        // if (critter1.color[0] >= 0.9 or critter1.color[0] <= 0.1) {
-        //     change0 *= -1;
-        // }
-        // critter1.color[0] += change0;
-        // if (critter1.color[1] >= 0.9 or critter1.color[1] <= 0.1) {
-        //     change1 *= -1;
-        // }
-        // critter1.color[1] += change1;
-        // if (critter1.color[2] >= 0.9 or critter1.color[2] <= 0.1) {
-        //     change2 *= -1;
-        // }
-        // critter1.color[2] += change2;
+        critter1.update(dt);
 
-        // r.sceneObject.draw(viewProj, 0);
-        //
-        // r.sceneObject.rotateZLocal(0.02);
-        //r.sceneObject.rotateYLocal(0.008);
-        //r2.sceneObject.localMatrix = math.mul(r2.sceneObject.localMatrix, math.translation(0.005, 0, 0));
-        //
-        // if (glfw.glfwGetKey(window, glfw.GLFW_KEY_W) == glfw.GLFW_PRESS) {
-        //     r2.sceneObject.translateLocal(0, 0.01, 0);
-        // }
-        //
-        // if (glfw.glfwGetKey(window, glfw.GLFW_KEY_S) == glfw.GLFW_PRESS) {
-        //     r2.sceneObject.translateLocal(0, -0.01, 0);
-        // }
-        //
-        // std.debug.print("r2 local tx,ty = {d}, {d}\n", .{ r2.sceneObject.localMatrix[3][0], r2.sceneObject.localMatrix[3][1] });
-        //
-        // const world = r2.sceneObject.getWorldMatrix();
-        // std.debug.print("r2 WORLD tx,ty = {d}, {d}\n", .{ world[3][0], world[3][1] });
+        frames += 1.0;
+        timeAccum += dt;
+
+        if (frames == 15.0) {
+            const fps = frames / timeAccum;
+            std.debug.print("FPS: {d}\n", .{fps});
+
+            frames = 0.0;
+            timeAccum = 0.0;
+        }
 
         glfw.glfwSwapBuffers(window);
         glfw.glfwPollEvents();

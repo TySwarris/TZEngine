@@ -16,6 +16,9 @@ pub const SquareCritter = struct {
     ebo: gl.GLuint = 0,
 
     color: [3]f32 = undefined,
+    rChange: f16 = 0.01,
+    gChange: f16 = 0.05,
+    bChange: f16 = 0.075,
 
     pub fn init(self: *SquareCritter, allocator: std.mem.Allocator) !void {
         self.sceneObject = SceneObject.init(allocator);
@@ -67,6 +70,21 @@ pub const SquareCritter = struct {
         gl.glDrawElements(gl.GL_TRIANGLES, 6, gl.GL_UNSIGNED_INT, null);
 
         //gl.glBindVertexArray(0);
+    }
+
+    pub fn update(self: *SquareCritter, dt: f32) void {
+        if (self.color[0] >= 1.0 or self.color[0] <= 0.0) {
+            self.rChange *= -1;
+        }
+        if (self.color[1] >= 1.0 or self.color[1] <= 0.0) {
+            self.gChange *= -1;
+        }
+        if (self.color[2] >= 1.0 or self.color[2] <= 0.0) {
+            self.bChange *= -1;
+        }
+        self.color[0] += self.rChange * dt;
+        self.color[1] += self.gChange * dt;
+        self.color[2] += self.bChange * dt;
     }
 
     pub fn deinit(self: *SquareCritter) void {
