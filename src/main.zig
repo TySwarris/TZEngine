@@ -86,10 +86,10 @@ pub fn main() !void {
 
         critter1.update(dt);
 
+        //FPS Counter
         frames += 1.0;
         timeAccum += dt;
-
-        if (frames == 15.0) {
+        if (timeAccum >= 0.5) {
             const fps = frames / timeAccum;
             std.debug.print("FPS: {d}\n", .{fps});
 
