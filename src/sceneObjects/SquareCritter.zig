@@ -20,7 +20,16 @@ pub const SquareCritter = struct {
     gChange: f16 = 0.05,
     bChange: f16 = 0.075,
 
-    pub fn init(self: *SquareCritter, allocator: std.mem.Allocator) !void {
+    xVelocity: f32 = 0,
+    yVelocity: f32 = 0,
+
+    screenHeight: f32 = undefined,
+    screenWidth: f32 = undefined,
+
+    airResistance: f32 = undefined, //0.0 = no resistance, 1.0 = dead stop.
+    bounceLoss: f32 = undefined, //0.0 = no loss, 1.0 = full stop.
+
+    pub fn init(self: *SquareCritter, allocator: std.mem.Allocator, screenWidth: f32, screenHeight: f32) !void {
         self.sceneObject = SceneObject.init(allocator);
         self.allocator = allocator;
         self.sceneObject.owner = self;
@@ -31,6 +40,11 @@ pub const SquareCritter = struct {
             "shaders/fragmentShader.glsl",
         );
         self.color = .{ 0.8, 0.2, 0.2 };
+        self.screenWidth = screenWidth;
+        self.screenHeight = screenHeight;
+
+        self.airResistance = 0.1;
+        self.bounceLoss = 0.2;
 
         const vertices = [_]f32{
             //Positions
@@ -73,18 +87,21 @@ pub const SquareCritter = struct {
     }
 
     pub fn update(self: *SquareCritter, dt: f32) void {
-        if (self.color[0] >= 1.0 or self.color[0] <= 0.0) {
-            self.rChange *= -1;
-        }
-        if (self.color[1] >= 1.0 or self.color[1] <= 0.0) {
-            self.gChange *= -1;
-        }
-        if (self.color[2] >= 1.0 or self.color[2] <= 0.0) {
-            self.bChange *= -1;
-        }
-        self.color[0] += self.rChange * dt;
-        self.color[1] += self.gChange * dt;
-        self.color[2] += self.bChange * dt;
+        // if (self.color[0] >= 1.0 or self.color[0] <= 0.0) {
+        //     self.rChange *= -1;
+        // }
+        // if (self.color[1] >= 1.0 or self.color[1] <= 0.0) {
+        //     self.gChange *= -1;
+        // }
+        // if (self.color[2] >= 1.0 or self.color[2] <= 0.0) {
+        //     self.bChange *= -1;
+        // }
+        // self.color[0] += self.rChange * dt;
+        // self.color[1] += self.gChange * dt;
+        // self.color[2] += self.bChange * dt;
+        self.gravity(dt);
+        self.collision();
+        self.sceneObject.translateLocal(0, self.yVelocity * dt, 0);
     }
 
     pub fn deinit(self: *SquareCritter) void {
@@ -102,10 +119,27 @@ pub const SquareCritter = struct {
             self.ebo = 0;
         }
 
-        // Deinit shader (assuming Shader has its own deinit)
+        // Deinit shader
         self.shader.deinit();
 
         // Deinit the embedded SceneObject
         self.sceneObject.deinit();
+    }
+    fn gravity(self: *SquareCritter, dt: f32) void {
+        const drag: f32 = -self.yVelocity * self.airResistance;
+        self.yVelocity -= (9.8 * dt);
+        self.yVelocity += drag * dt;
+    }
+    fn collision(self: *SquareCritter) void {
+        const worldPos: math.Mat = self.sceneObject.getWorldMatrix();
+        const worldYPos: f32 = worldPos[3][1];
+
+        //bounce
+        if (worldYPos < -self.screenHeight / 2) {
+            self.sceneObject.translateLocal(0, -self.screenHeight / 2 - worldYPos, 0);
+            std.debug.print("velocity before bounce: {d}\n", .{self.yVelocity});
+            self.yVelocity = -self.yVelocity * (1.0 - self.bounceLoss);
+            std.debug.print("velocity after bounce: {d}\n", .{self.yVelocity});
+        }
     }
 };

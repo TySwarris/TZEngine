@@ -58,10 +58,12 @@ pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
 
-    var camera: Camera = Camera.init(allocator, 2.0, 4.0, 4.0, 0.5, 10.0);
+    const width: f32 = 50;
+    const height: f32 = 50;
+    var camera: Camera = Camera.init(allocator, 2.0, width, height, 0.5, 10.0);
 
     var critter1: SCritter = undefined;
-    try critter1.init(allocator);
+    try critter1.init(allocator, width, height);
 
     var timer = try std.time.Timer.start();
 
@@ -70,8 +72,6 @@ pub fn main() !void {
     while (glfw.glfwWindowShouldClose(window) == 0) {
         const dt_ns: f32 = @floatFromInt(timer.lap());
         const dt: f32 = dt_ns / 1_000_000_000;
-        //std.debug.print("seconds since last frame: {d}\n", .{dt});
-        // std.debug.print("fps: {d}\n", .{1 / dt});
         processInput(window);
 
         camera.update(window, dt);
@@ -82,7 +82,7 @@ pub fn main() !void {
         gl.glClearColor(0.2, 0.3, 0.3, 1.0);
         gl.glClear(gl.GL_COLOR_BUFFER_BIT);
 
-        critter1.sceneObject.draw(viewProj, 1);
+        critter1.sceneObject.draw(viewProj, 0);
 
         critter1.update(dt);
 

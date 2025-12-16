@@ -21,7 +21,7 @@ pub const OrthographicCamera = struct {
     }
 
     pub fn update(self: *OrthographicCamera, window: ?*glfw.GLFWwindow, dt: f32) void {
-        const speed: f32 = 1.0;
+        const speed: f32 = 10.0;
         if (glfw.glfwGetKey(window, glfw.GLFW_KEY_UP) == glfw.GLFW_PRESS) {
             self.cam.sceneObject.translateLocal(0, speed * dt, 0);
         }
