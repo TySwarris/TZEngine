@@ -43,8 +43,8 @@ pub const SquareCritter = struct {
         self.screenWidth = screenWidth;
         self.screenHeight = screenHeight;
 
-        self.airResistance = 0.1;
-        self.bounceLoss = 0.2;
+        self.airResistance = 0.0;
+        self.bounceLoss = 0.1;
 
         const vertices = [_]f32{
             //Positions
