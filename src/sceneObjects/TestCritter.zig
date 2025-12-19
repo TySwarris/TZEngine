@@ -7,7 +7,7 @@ const std = @import("std");
 const gl = @cImport({
     @cInclude("glad/glad.h");
 });
-pub const SquareCritter = struct {
+pub const TestCritter = struct {
     sceneObject: SceneObject,
     allocator: std.mem.Allocator,
     shader: Shader,
@@ -17,7 +17,12 @@ pub const SquareCritter = struct {
 
     color: [3]f32 = undefined,
 
-    pub fn init(self: *SquareCritter, allocator: std.mem.Allocator, screenWidth: f32, screenHeight: f32) !void {
+    hunger: f32, //tim until hunger fully depleted, in seconds.
+    thirst: f32, // time untill thirst fully depleted, in seconds.
+    speed: f32,
+    sightDistance: f32, //distance
+
+    pub fn init(self: *TestCritter, allocator: std.mem.Allocator, hunger: f32, thirst: f32, speed: f32, sightDistance: f32) !void {
         self.sceneObject = SceneObject.init(allocator);
         self.allocator = allocator;
         self.sceneObject.owner = self;
@@ -28,11 +33,11 @@ pub const SquareCritter = struct {
             "shaders/fragmentShader.glsl",
         );
         self.color = .{ 0.8, 0.2, 0.2 };
-        self.screenWidth = screenWidth;
-        self.screenHeight = screenHeight;
 
-        self.airResistance = 0.0;
-        self.bounceLoss = 0.1;
+        self.hunger = hunger;
+        self.thirst = thirst;
+        self.speed = speed;
+        self.sightDistance = sightDistance;
 
         const vertices = [_]f32{
             //Positions
@@ -61,7 +66,7 @@ pub const SquareCritter = struct {
     fn draw(owner: *anyopaque, world: math.Mat, pass: u32) void {
         _ = pass;
 
-        const self: *SquareCritter = @ptrCast(@alignCast(owner));
+        const self: *TestCritter = @ptrCast(@alignCast(owner));
         self.shader.use();
 
         self.shader.setMat4("u_mvpMatrix", world);
@@ -74,11 +79,13 @@ pub const SquareCritter = struct {
         //gl.glBindVertexArray(0);
     }
 
-    pub fn update(self: *SquareCritter, dt: f32) void {
-        self.sceneObject.translateLocal(0, self.yVelocity * dt, 0);
+    pub fn update(self: *TestCritter, dt: f32) void {
+        self.self.sceneObject.translateLocal(0, 0 * dt, 0);
+        self.hunger -= dt;
+        self.thirst -= dt;
     }
 
-    pub fn deinit(self: *SquareCritter) void {
+    pub fn deinit(self: *TestCritter) void {
         // Delete GL vertex array + buffers
         if (self.vao != 0) {
             gl.glDeleteVertexArrays(1, &self.vao);
