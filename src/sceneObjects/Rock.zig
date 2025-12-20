@@ -52,8 +52,8 @@ pub const Rock = struct {
 
         gl.glBindVertexArray(self.vao);
 
-        //gl.glDrawElements(gl.GL_FRONT_AND_BACK, 3, gl.GL_UNSIGNED_INT, 0);
-        gl.glDrawArrays(gl.GL_TRIANGLES, 0, 3);
+        gl.glDrawElements(gl.GL_FRONT_AND_BACK, 3, gl.GL_UNSIGNED_INT, 0);
+        //gl.glDrawArrays(gl.GL_TRIANGLES, 0, 3);
     }
 
     pub fn deinit(self: *Rock) void {

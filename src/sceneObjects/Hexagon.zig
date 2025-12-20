@@ -7,7 +7,7 @@ const std = @import("std");
 const gl = @cImport({
     @cInclude("glad/glad.h");
 });
-pub const SquareCritter = struct {
+pub const Hexagon = struct {
     sceneObject: SceneObject,
     allocator: std.mem.Allocator,
     shader: Shader,
@@ -15,20 +15,14 @@ pub const SquareCritter = struct {
     vbo: gl.GLuint = 0,
     ebo: gl.GLuint = 0,
 
-    indicesLen: c_int,
-
     color: [3]f32 = undefined,
     rChange: f16 = 0.01,
     gChange: f16 = 0.05,
     bChange: f16 = 0.075,
 
-    screenHeight: f32,
-    screenWidth: f32,
-    yVelocity: f32,
-    airResistance: f32,
-    bounceLoss: f32,
+    indicesLen: c_int,
 
-    pub fn init(self: *SquareCritter, allocator: std.mem.Allocator, screenWidth: f32, screenHeight: f32) !void {
+    pub fn init(self: *Hexagon, allocator: std.mem.Allocator, color: [3]f32) !void {
         self.sceneObject = SceneObject.init(allocator);
         self.allocator = allocator;
         self.sceneObject.owner = self;
@@ -38,26 +32,28 @@ pub const SquareCritter = struct {
             "shaders/vertexShader.glsl",
             "shaders/fragmentShader.glsl",
         );
+        self.color = color;
 
-        self.screenHeight = screenHeight;
-        self.screenWidth = screenWidth;
-        self.yVelocity = 0;
-        self.airResistance = 0.05;
-        self.bounceLoss = 0.10;
-
-        self.color = .{ 0.8, 0.2, 0.2 };
         const vertices = [_]f32{
             //Positions
-            -0.5, 0.5,  0,
-            0.5,  0.5,  0,
-            0.5,  -0.5, 0,
-            -0.5, -0.5, 0,
+            0.0,   0.0,  0.0,
+            -0.5,  0.0,  0.0,
+            -0.25, 0.5,  0.0,
+            0.25,  0.5,  0.0,
+            0.5,   0.0,  0.0,
+            0.25,  -0.5, 0.0,
+            -0.25, -0.5, 0.0,
         };
 
         const indices = [_]u32{
             0, 1, 2,
             0, 2, 3,
+            0, 3, 4,
+            0, 4, 5,
+            0, 5, 6,
+            0, 6, 1,
         };
+
         self.indicesLen = indices.len;
 
         self.vao = GLBuffers.createVAO();
@@ -74,7 +70,7 @@ pub const SquareCritter = struct {
     fn draw(owner: *anyopaque, world: math.Mat, pass: u32) void {
         _ = pass;
 
-        const self: *SquareCritter = @ptrCast(@alignCast(owner));
+        const self: *Hexagon = @ptrCast(@alignCast(owner));
         self.shader.use();
 
         self.shader.setMat4("u_mvpMatrix", world);
@@ -87,7 +83,7 @@ pub const SquareCritter = struct {
         //gl.glBindVertexArray(0);
     }
 
-    pub fn update(self: *SquareCritter, dt: f32) void {
+    pub fn update(self: *Hexagon, dt: f32) void {
         // if (self.color[0] >= 1.0 or self.color[0] <= 0.0) {
         //     self.rChange *= -1;
         // }
@@ -100,12 +96,12 @@ pub const SquareCritter = struct {
         // self.color[0] += self.rChange * dt;
         // self.color[1] += self.gChange * dt;
         // self.color[2] += self.bChange * dt;
-        self.gravity(dt);
-        self.collision();
+        //self.gravity(dt);
+        //self.collision();
         self.sceneObject.translateLocal(0, self.yVelocity * dt, 0);
     }
 
-    pub fn deinit(self: *SquareCritter) void {
+    pub fn deinit(self: *Hexagon) void {
         // Delete GL vertex array + buffers
         if (self.vao != 0) {
             gl.glDeleteVertexArrays(1, &self.vao);
@@ -126,12 +122,12 @@ pub const SquareCritter = struct {
         // Deinit the embedded SceneObject
         self.sceneObject.deinit();
     }
-    fn gravity(self: *SquareCritter, dt: f32) void {
+    fn gravity(self: *Hexagon, dt: f32) void {
         const drag: f32 = -self.yVelocity * self.airResistance;
         self.yVelocity -= (9.8 * dt);
         self.yVelocity += drag * dt;
     }
-    fn collision(self: *SquareCritter) void {
+    fn collision(self: *Hexagon) void {
         const worldPos: math.Mat = self.sceneObject.getWorldMatrix();
         const worldYPos: f32 = worldPos[3][1];
 

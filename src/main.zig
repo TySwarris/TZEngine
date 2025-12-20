@@ -13,6 +13,7 @@ const gl = @cImport({
 });
 
 const SCritter = @import("sceneObjects/SquareCritter.zig").SquareCritter;
+const Hexagon = @import("sceneObjects/Hexagon.zig").Hexagon;
 
 fn zigGlfwLoader(name: [*c]const u8) callconv(.c) ?*anyopaque {
     const proc_opt = glfw.glfwGetProcAddress(name);
@@ -65,6 +66,16 @@ pub fn main() !void {
     var critter1: SCritter = undefined;
     try critter1.init(allocator, width, height);
 
+    var hex1: Hexagon = undefined;
+    try hex1.init(allocator, .{ 0, 0, 0 });
+
+    var hex2: Hexagon = undefined;
+    try hex2.init(allocator, .{ 0.1, 0.8, 0.1 });
+    hex2.sceneObject.translateLocal(0.75, 0.5, 0);
+
+    var hex3: Hexagon = undefined;
+    try hex3.init(allocator, .{ 1, 1, 1 });
+    hex3.sceneObject.translateLocal(1.5, 0, 0);
     var timer = try std.time.Timer.start();
 
     var frames: f32 = 0.0;
@@ -83,7 +94,9 @@ pub fn main() !void {
         gl.glClear(gl.GL_COLOR_BUFFER_BIT);
 
         critter1.sceneObject.draw(viewProj, 0);
-
+        hex1.sceneObject.draw(viewProj, 0);
+        hex2.sceneObject.draw(viewProj, 0);
+        hex3.sceneObject.draw(viewProj, 0);
         critter1.update(dt);
 
         //FPS Counter
