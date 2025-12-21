@@ -79,6 +79,21 @@ pub fn main() !void {
     try hex4.init(allocator, .{ 0.5, 0.5, 0.5 }, .{ 1.5 + 0.75, -0.5 * std.math.sin(60 * std.math.pi / 180.0) }); //this would be [1][1] second col and row
     var timer = try std.time.Timer.start();
 
+    const yOffset: f32 = std.math.sin(60 * std.math.pi / 180.0);
+    var hexArr: [10][10]Hexagon = undefined;
+
+    for (&hexArr, 0..) |*col, c| {
+        const column: f32 = @floatFromInt(c);
+        for (col, 0..) |*cell, r| {
+            const row: f32 = @floatFromInt(r);
+            if (c % 2 == 1) { // if odd row
+                try cell.init(allocator, .{ 0, 0, 0 }, .{ 0.75 * column, (-row - 0.5) * yOffset });
+            } else {
+                try cell.init(allocator, .{ 1, 1, 1 }, .{ 0.75 * column, -row * yOffset });
+            }
+        }
+    }
+
     var frames: f32 = 0.0;
     var timeAccum: f32 = 0.0;
     while (glfw.glfwWindowShouldClose(window) == 0) {
@@ -95,10 +110,16 @@ pub fn main() !void {
         gl.glClear(gl.GL_COLOR_BUFFER_BIT);
 
         critter1.sceneObject.draw(viewProj, 0);
-        hex1.sceneObject.draw(viewProj, 0);
-        hex2.sceneObject.draw(viewProj, 0);
-        hex3.sceneObject.draw(viewProj, 0);
-        hex4.sceneObject.draw(viewProj, 0);
+        // hex1.sceneObject.draw(viewProj, 0);
+        // hex2.sceneObject.draw(viewProj, 0);
+        // hex3.sceneObject.draw(viewProj, 0);
+        // hex4.sceneObject.draw(viewProj, 0);
+        //
+        for (&hexArr) |*hexS| {
+            for (hexS) |*hex| {
+                hex.sceneObject.draw(viewProj, 0);
+            }
+        }
 
         critter1.update(dt);
 
