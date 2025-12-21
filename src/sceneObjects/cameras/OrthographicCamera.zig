@@ -34,6 +34,17 @@ pub const OrthographicCamera = struct {
         if (glfw.glfwGetKey(window, glfw.GLFW_KEY_RIGHT) == glfw.GLFW_PRESS) {
             self.cam.sceneObject.translateLocal(speed * dt, 0, 0);
         }
+        if (glfw.glfwGetKey(window, glfw.GLFW_KEY_K) == glfw.GLFW_PRESS) {
+            if (self.width > 50 * dt) {
+                self.width -= 50 * dt;
+                self.height -= 50 * dt;
+            }
+        }
+
+        if (glfw.glfwGetKey(window, glfw.GLFW_KEY_J) == glfw.GLFW_PRESS) {
+            self.height += 50 * dt;
+            self.width += 50 * dt;
+        }
     }
 
     pub fn getProjectionMatrix(self: *const OrthographicCamera) math.Mat {

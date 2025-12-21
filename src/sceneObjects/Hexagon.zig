@@ -22,7 +22,7 @@ pub const Hexagon = struct {
 
     indicesLen: c_int,
 
-    pub fn init(self: *Hexagon, allocator: std.mem.Allocator, color: [3]f32) !void {
+    pub fn init(self: *Hexagon, allocator: std.mem.Allocator, color: [3]f32, xy: [2]f32) !void {
         self.sceneObject = SceneObject.init(allocator);
         self.allocator = allocator;
         self.sceneObject.owner = self;
@@ -34,16 +34,20 @@ pub const Hexagon = struct {
         );
         self.color = color;
 
-        const vertices = [_]f32{
-            //Positions
-            0.0,   0.0,  0.0,
-            -0.5,  0.0,  0.0,
-            -0.25, 0.5,  0.0,
-            0.25,  0.5,  0.0,
-            0.5,   0.0,  0.0,
-            0.25,  -0.5, 0.0,
-            -0.25, -0.5, 0.0,
-        };
+        var vertices: [21]f32 = undefined;
+        var i: usize = 3;
+        vertices[0] = 0;
+        vertices[1] = 0;
+        vertices[2] = 0;
+        var radians: f32 = 0;
+        while (i < vertices.len) {
+            vertices[i] = 0.5 * math.cos(radians);
+            vertices[i + 1] = 0.5 * std.math.sin(radians);
+            vertices[i + 2] = 0;
+            radians += 60 * std.math.pi / 180.0;
+            std.debug.print("vertex {d} at x:{d} y: {d}\n", .{ i / 3, vertices[i], vertices[i + 1] });
+            i += 3;
+        }
 
         const indices = [_]u32{
             0, 1, 2,
@@ -53,6 +57,8 @@ pub const Hexagon = struct {
             0, 5, 6,
             0, 6, 1,
         };
+
+        self.sceneObject.translateLocal(xy[0], xy[1], 0);
 
         self.indicesLen = indices.len;
 

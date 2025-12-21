@@ -67,15 +67,16 @@ pub fn main() !void {
     try critter1.init(allocator, width, height);
 
     var hex1: Hexagon = undefined;
-    try hex1.init(allocator, .{ 0, 0, 0 });
+    try hex1.init(allocator, .{ 0, 0, 0 }, .{ 0, 0 }); //this would be [0][0]
 
     var hex2: Hexagon = undefined;
-    try hex2.init(allocator, .{ 0.1, 0.8, 0.1 });
-    hex2.sceneObject.translateLocal(0.75, 0.5, 0);
+    try hex2.init(allocator, .{ 0.0, 0.0, 0.0 }, .{ 1.5, 0 }); // this would be [1][0] or [0][1] first row second coll
 
     var hex3: Hexagon = undefined;
-    try hex3.init(allocator, .{ 1, 1, 1 });
-    hex3.sceneObject.translateLocal(1.5, 0, 0);
+    try hex3.init(allocator, .{ 0.5, 0.5, 0.5 }, .{ 0.75, -0.5 * std.math.sin(60 * std.math.pi / 180.0) }); //this would be [0][1] or [1][0] first col second row
+
+    var hex4: Hexagon = undefined;
+    try hex4.init(allocator, .{ 0.5, 0.5, 0.5 }, .{ 1.5 + 0.75, -0.5 * std.math.sin(60 * std.math.pi / 180.0) }); //this would be [1][1] second col and row
     var timer = try std.time.Timer.start();
 
     var frames: f32 = 0.0;
@@ -97,6 +98,8 @@ pub fn main() !void {
         hex1.sceneObject.draw(viewProj, 0);
         hex2.sceneObject.draw(viewProj, 0);
         hex3.sceneObject.draw(viewProj, 0);
+        hex4.sceneObject.draw(viewProj, 0);
+
         critter1.update(dt);
 
         //FPS Counter
