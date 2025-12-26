@@ -136,7 +136,7 @@ pub const SquareCritter = struct {
         const worldYPos: f32 = worldPos[3][1];
 
         //bounce
-        if (worldYPos < -self.screenHeight / 2) {
+        if (worldYPos + 0.5 < -self.screenHeight / 2) {
             self.sceneObject.translateLocal(0, -self.screenHeight / 2 - worldYPos, 0);
             std.debug.print("velocity before bounce: {d}\n", .{self.yVelocity});
             self.yVelocity = -self.yVelocity * (1.0 - self.bounceLoss);

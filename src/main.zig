@@ -66,30 +66,19 @@ pub fn main() !void {
     var critter1: SCritter = undefined;
     try critter1.init(allocator, width, height);
 
-    var hex1: Hexagon = undefined;
-    try hex1.init(allocator, .{ 0, 0, 0 }, .{ 0, 0 }); //this would be [0][0]
-
-    var hex2: Hexagon = undefined;
-    try hex2.init(allocator, .{ 0.0, 0.0, 0.0 }, .{ 1.5, 0 }); // this would be [1][0] or [0][1] first row second coll
-
-    var hex3: Hexagon = undefined;
-    try hex3.init(allocator, .{ 0.5, 0.5, 0.5 }, .{ 0.75, -0.5 * std.math.sin(60 * std.math.pi / 180.0) }); //this would be [0][1] or [1][0] first col second row
-
-    var hex4: Hexagon = undefined;
-    try hex4.init(allocator, .{ 0.5, 0.5, 0.5 }, .{ 1.5 + 0.75, -0.5 * std.math.sin(60 * std.math.pi / 180.0) }); //this would be [1][1] second col and row
     var timer = try std.time.Timer.start();
 
     const yOffset: f32 = std.math.sin(60 * std.math.pi / 180.0);
-    var hexArr: [10][10]Hexagon = undefined;
+    var hexArr: [80][80]Hexagon = undefined;
 
     for (&hexArr, 0..) |*col, c| {
         const column: f32 = @floatFromInt(c);
         for (col, 0..) |*cell, r| {
             const row: f32 = @floatFromInt(r);
-            if (c % 2 == 1) { // if odd row
-                try cell.init(allocator, .{ 0, 0, 0 }, .{ 0.75 * column, (-row - 0.5) * yOffset });
+            if (@mod(c, 2) == 1) { // if odd row
+                try cell.init(allocator, .{ 0, 0, 0 }, .{ 0.75 * column, (-row - 0.5) * yOffset }, .{ @intCast(r), @intCast(c) }); //shift down to allign
             } else {
-                try cell.init(allocator, .{ 1, 1, 1 }, .{ 0.75 * column, -row * yOffset });
+                try cell.init(allocator, .{ 1, 1, 1 }, .{ 0.75 * column, -row * yOffset }, .{ @intCast(r), @intCast(c) });
             }
         }
     }
@@ -110,11 +99,7 @@ pub fn main() !void {
         gl.glClear(gl.GL_COLOR_BUFFER_BIT);
 
         critter1.sceneObject.draw(viewProj, 0);
-        // hex1.sceneObject.draw(viewProj, 0);
-        // hex2.sceneObject.draw(viewProj, 0);
-        // hex3.sceneObject.draw(viewProj, 0);
-        // hex4.sceneObject.draw(viewProj, 0);
-        //
+
         for (&hexArr) |*hexS| {
             for (hexS) |*hex| {
                 hex.sceneObject.draw(viewProj, 0);

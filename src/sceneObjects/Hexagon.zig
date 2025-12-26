@@ -16,13 +16,13 @@ pub const Hexagon = struct {
     ebo: gl.GLuint = 0,
 
     color: [3]f32 = undefined,
-    rChange: f16 = 0.01,
-    gChange: f16 = 0.05,
-    bChange: f16 = 0.075,
+
+    row: u16,
+    col: u16,
 
     indicesLen: c_int,
 
-    pub fn init(self: *Hexagon, allocator: std.mem.Allocator, color: [3]f32, xy: [2]f32) !void {
+    pub fn init(self: *Hexagon, allocator: std.mem.Allocator, color: [3]f32, xy: [2]f32, rowCol: [2]u16) !void {
         self.sceneObject = SceneObject.init(allocator);
         self.allocator = allocator;
         self.sceneObject.owner = self;
@@ -33,6 +33,9 @@ pub const Hexagon = struct {
             "shaders/fragmentShader.glsl",
         );
         self.color = color;
+
+        self.row = rowCol[0];
+        self.row = rowCol[1];
 
         var vertices: [21]f32 = undefined;
         var i: usize = 3;
@@ -45,7 +48,7 @@ pub const Hexagon = struct {
             vertices[i + 1] = 0.5 * std.math.sin(radians);
             vertices[i + 2] = 0;
             radians += 60 * std.math.pi / 180.0;
-            std.debug.print("vertex {d} at x:{d} y: {d}\n", .{ i / 3, vertices[i], vertices[i + 1] });
+            //std.debug.print("vertex {d} at x:{d} y: {d}\n", .{ i / 3, vertices[i], vertices[i + 1] });
             i += 3;
         }
 
@@ -138,7 +141,7 @@ pub const Hexagon = struct {
         const worldYPos: f32 = worldPos[3][1];
 
         //bounce
-        if (worldYPos < -self.screenHeight / 2) {
+        if (worldYPos + 0.5 < -self.screenHeight / 2) {
             self.sceneObject.translateLocal(0, -self.screenHeight / 2 - worldYPos, 0);
             std.debug.print("velocity before bounce: {d}\n", .{self.yVelocity});
             self.yVelocity = -self.yVelocity * (1.0 - self.bounceLoss);
