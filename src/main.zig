@@ -8,6 +8,8 @@ const ShaderMod = @import("render/shader.zig");
 const Shader = ShaderMod.Shader;
 const glfw = @import("glfw.zig").glfw;
 
+const WFC = @import("worldGen/WFC.zig");
+
 const gl = @cImport({
     @cInclude("glad/glad.h");
 });
@@ -69,7 +71,7 @@ pub fn main() !void {
     var timer = try std.time.Timer.start();
 
     const yOffset: f32 = std.math.sin(60 * std.math.pi / 180.0);
-    var hexArr: [80][80]Hexagon = undefined;
+    var hexArr: [20][20]Hexagon = undefined;
 
     for (&hexArr, 0..) |*col, c| {
         const column: f32 = @floatFromInt(c);
@@ -81,6 +83,23 @@ pub fn main() !void {
                 try cell.init(allocator, .{ 1, 1, 1 }, .{ 0.75 * column, -row * yOffset }, .{ @intCast(r), @intCast(c) });
             }
         }
+    }
+    var prng = std.Random.DefaultPrng.init(seed: {
+        var seed: u64 = undefined;
+        try std.posix.getrandom(std.mem.asBytes(&seed));
+        break :seed seed;
+    });
+    const rand = prng.random();
+    const col = rand.intRangeLessThan(i16, 0, hexArr.len);
+    const row = rand.intRangeLessThan(i16, 0, hexArr[0].len);
+
+    hexArr[@intCast(col)][@intCast(row)].color = .{ 0, 0, 1 };
+    const neighbours = WFC.neighbours(col, row, hexArr.len, hexArr[0].len);
+
+    for (0..neighbours.len) |i| {
+        const colI = neighbours.items[i].col;
+        const rowI = neighbours.items[i].row;
+        hexArr[@intCast(colI)][@intCast(rowI)].color = .{ 0.8, 0.8, 0 };
     }
 
     var frames: f32 = 0.0;
