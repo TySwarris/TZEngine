@@ -20,6 +20,9 @@ pub const Hexagon = struct {
     row: u16,
     col: u16,
 
+    tileMask: u4,
+    possibleTiles: u8,
+
     indicesLen: c_int,
 
     pub fn init(self: *Hexagon, allocator: std.mem.Allocator, color: [3]f32, xy: [2]f32, rowCol: [2]u16) !void {
@@ -36,6 +39,13 @@ pub const Hexagon = struct {
 
         self.row = rowCol[0];
         self.row = rowCol[1];
+
+        self.tileMask = 0b1111;
+        //Each bit represents a tiles.
+        //Same order as in Rules.md
+        //Water, Grass, Sand, Forest
+
+        self.possibleTiles = 4;
 
         var vertices: [21]f32 = undefined;
         var i: usize = 3;

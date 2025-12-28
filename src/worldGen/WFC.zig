@@ -1,10 +1,26 @@
 const std = @import("std");
+const Hexagon = @import("../sceneObjects/Hexagon.zig").Hexagon;
 
 const Coord = struct { col: i16, row: i16 };
 const Neighbours = struct {
     items: [6]Coord,
     len: usize,
 };
+
+const Tiles = struct {
+    waterColor: [3]f32 = .{ 0, 0.5, 0.95 }, //only next to grass or sand
+    grassColor: [3]f32 = .{ 0.04, 0.4, 0.08 }, //only next to grass. sand or forest
+    sandColor: [3]f32 = .{ 1, 1, 0.2 }, //only next to grass or water
+    forestColor: [3]f32 = .{ 0.05, 0.15, 0 }, //only next to grass,
+};
+
+const NeighbourMasks = struct {
+    waterNeighbourMask: u4 = 0b1110,
+    grassNeighbourMask: u4 = 0b1111,
+    sandNeighbourMask: u4 = 0b1110,
+    forestNeighbourMask: u4 = 0b0101,
+};
+
 pub fn neighbours(col: i16, row: i16, gridWidth: i16, gridHeight: i16) Neighbours {
     var unchecked = Neighbours{ .items = undefined, .len = 0 };
 
@@ -68,4 +84,36 @@ pub fn checkBounds(toCheck: Neighbours, gridWidth: i16, gridHeight: i16) Neighbo
     }
     checked.len = checkedI;
     return checked;
+}
+
+pub fn WFCStep(Hexagons: [][]Hexagon) void {
+    var checkedCol: u16 = undefined;
+    var checkedRow: u16 = undefined;
+    for (Hexagons) |col| {
+        for (col) |hex| {
+            if (hex.possibleTiles == 1) { //checking if any squares only have 1 option in their possible tiles, if they do u should make it that colour and update thhe neighbours possible tile mask.
+                hex.color = maskToTile(hex.tileMask);
+                checkedCol = hex.col;
+                checkedRow = hex.row;
+                hex.possibleTiles = 0;
+            }
+        }
+    }
+}
+
+pub fn maskToTile(mask: u4) [3]f32 {
+    var out: [3]f32 = undefined;
+    if (mask == 0b1000) {
+        out = Tiles.waterColor;
+    }
+    if (mask == 0b0100) {
+        out = Tiles.grassColor;
+    }
+    if (mask == 0b0010) {
+        out = Tiles.sandColor;
+    }
+    if (mask == 0b0001) {
+        out = Tiles.forestColor;
+    }
+    return out;
 }
