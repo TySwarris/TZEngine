@@ -86,16 +86,20 @@ pub fn checkBounds(toCheck: Neighbours, gridWidth: i16, gridHeight: i16) Neighbo
     return checked;
 }
 
-pub fn WFCStep(Hexagons: [][]Hexagon) void {
+pub fn WFCStep(Hexagons: [][]Hexagon, gridWidth: i16, gridHeight: i16) void {
     var checkedCol: u16 = undefined;
     var checkedRow: u16 = undefined;
     for (Hexagons) |col| {
         for (col) |hex| {
-            if (hex.possibleTiles == 1) { //checking if any squares only have 1 option in their possible tiles, if they do u should make it that colour and update thhe neighbours possible tile mask.
+            if (@popCount(hex.tileMask) == 1 and hex.collapsed == false) { //checking if any squares only have 1 option in their possible tiles, if they do u should make it that colour and update thhe neighbours possible tile mask.
                 hex.color = maskToTile(hex.tileMask);
                 checkedCol = hex.col;
                 checkedRow = hex.row;
-                hex.possibleTiles = 0;
+                hex.collapsed = true;
+                var toChange = neighbours(checkedCol, checkedRow, gridWidth, gridHeight);
+                for (0..toChange.len) |i| {
+                    Hexagons[toChange.items[i]][toChange.items[i]].tileMask = Hexagons[toChange.items[i]][toChange.items[i]].tileMask & neighbourMask(hex.tileMask);
+                }
             }
         }
     }
@@ -103,17 +107,22 @@ pub fn WFCStep(Hexagons: [][]Hexagon) void {
 
 pub fn maskToTile(mask: u4) [3]f32 {
     var out: [3]f32 = undefined;
-    if (mask == 0b1000) {
-        out = Tiles.waterColor;
+    switch (mask) {
+        0b1000 => out = Tiles.waterColor,
+        0b0100 => out = Tiles.grassColor,
+        0b0010 => out = Tiles.sandColor,
+        0b0001 => out = Tiles.forestColor,
     }
-    if (mask == 0b0100) {
-        out = Tiles.grassColor;
-    }
-    if (mask == 0b0010) {
-        out = Tiles.sandColor;
-    }
-    if (mask == 0b0001) {
-        out = Tiles.forestColor;
+    return out;
+}
+
+pub fn neighbourMask(mask: u4) u4 {
+    var out: u4 = undefined;
+    switch (mask) {
+        0b1000 => out = NeighbourMasks.waterNeighbourMask,
+        0b0100 => out = NeighbourMasks.grassNeighbourMask,
+        0b0010 => out = NeighbourMasks.sandNeighbourMask,
+        0b0001 => out = NeighbourMasks.forestNeighbourMask,
     }
     return out;
 }
