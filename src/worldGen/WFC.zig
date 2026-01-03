@@ -87,22 +87,31 @@ pub fn checkBounds(toCheck: Neighbours, gridWidth: i16, gridHeight: i16) Neighbo
 }
 
 pub fn WFCStep(Hexagons: [][]Hexagon, gridWidth: i16, gridHeight: i16) void {
-    var checkedCol: u16 = undefined;
-    var checkedRow: u16 = undefined;
+    var checkedCol: usize = undefined;
+    var checkedRow: usize = undefined;
+    var entropy: u4 = undefined;
     for (Hexagons) |col| {
         for (col) |hex| {
-            if (@popCount(hex.tileMask) == 1 and hex.collapsed == false) { //checking if any squares only have 1 option in their possible tiles, if they do u should make it that colour and update thhe neighbours possible tile mask.
+            const currentEntropy: u4 = @popCount(hex.tileMask);
+            if (currentEntropy == 1 and hex.collapsed == false) {
+                //checking if any squares only have 1 option in their possible tiles, if they do u should make it that colour and update thhe neighbours possible tile mask.
                 hex.color = maskToTile(hex.tileMask);
-                checkedCol = hex.col;
-                checkedRow = hex.row;
                 hex.collapsed = true;
-                var toChange = neighbours(checkedCol, checkedRow, gridWidth, gridHeight);
+                var toChange = neighbours(hex.col, hex.row, gridWidth, gridHeight);
                 for (0..toChange.len) |i| {
                     Hexagons[toChange.items[i]][toChange.items[i]].tileMask = Hexagons[toChange.items[i]][toChange.items[i]].tileMask & neighbourMask(hex.tileMask);
                 }
+                continue;
+            }
+            if (currentEntropy < entropy) { //getting the lowest entropy hexagon.
+                checkedCol = hex.col;
+                checkedRow = hex.row;
+                entropy = currentEntropy;
             }
         }
     }
+    //now we have the lowest entropy cell in checkekCol and Row variables. it would be the first with the lowest entropy, idk if that is a problem.
+
 }
 
 pub fn maskToTile(mask: u4) [3]f32 {
