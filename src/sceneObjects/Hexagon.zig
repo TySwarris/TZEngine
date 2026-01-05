@@ -24,6 +24,8 @@ pub const Hexagon = struct {
     collapsed: bool,
     indicesLen: c_int,
 
+    inQueue: bool,
+
     pub fn init(self: *Hexagon, allocator: std.mem.Allocator, color: [3]f32, xy: [2]f32, rowCol: [2]u16) !void {
         self.sceneObject = SceneObject.init(allocator);
         self.allocator = allocator;
@@ -41,6 +43,8 @@ pub const Hexagon = struct {
 
         self.tileMask = 0b1111;
         self.collapsed = false;
+
+        self.inQueue = false;
         //Each bit represents a tiles.
         //Same order as in Rules.md
         //Water, Grass, Sand, Forest

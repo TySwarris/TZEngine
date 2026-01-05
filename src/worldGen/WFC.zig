@@ -21,6 +21,15 @@ const NeighbourMasks = struct {
     forestNeighbourMask: u4 = 0b0101,
 };
 
+var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+
+var changedCells = std.Deque(Coord).initCapacity(gpa, 160);
+
+const WATER: u4 = 0b1000;
+const GRASS: u4 = 0b0100;
+const SAND: u4 = 0b0010;
+const FOREST: u4 = 0b0001;
+
 pub fn neighbours(col: i16, row: i16, gridWidth: i16, gridHeight: i16) Neighbours {
     var unchecked = Neighbours{ .items = undefined, .len = 0 };
 
@@ -117,10 +126,10 @@ pub fn WFCStep(Hexagons: [][]Hexagon, gridWidth: i16, gridHeight: i16) void {
 pub fn maskToTile(mask: u4) [3]f32 {
     var out: [3]f32 = undefined;
     switch (mask) {
-        0b1000 => out = Tiles.waterColor,
-        0b0100 => out = Tiles.grassColor,
-        0b0010 => out = Tiles.sandColor,
-        0b0001 => out = Tiles.forestColor,
+        WATER => out = Tiles.waterColor,
+        GRASS => out = Tiles.grassColor,
+        SAND => out = Tiles.sandColor,
+        FOREST => out = Tiles.forestColor,
     }
     return out;
 }
@@ -128,10 +137,40 @@ pub fn maskToTile(mask: u4) [3]f32 {
 pub fn neighbourMask(mask: u4) u4 {
     var out: u4 = undefined;
     switch (mask) {
-        0b1000 => out = NeighbourMasks.waterNeighbourMask,
-        0b0100 => out = NeighbourMasks.grassNeighbourMask,
-        0b0010 => out = NeighbourMasks.sandNeighbourMask,
-        0b0001 => out = NeighbourMasks.forestNeighbourMask,
+        WATER => out = NeighbourMasks.waterNeighbourMask,
+        GRASS => out = NeighbourMasks.grassNeighbourMask,
+        SAND => out = NeighbourMasks.sandNeighbourMask,
+        FOREST => out = NeighbourMasks.forestNeighbourMask,
     }
     return out;
+}
+
+pub fn propogation(hexagons: [][]Hexagon, changedQueue: std.Deque(Coord)) void {
+    while (changedQueue.popFront()) |changedCoords| {
+        const mask = hexagons[changedCoords.col][changedCoords.row].tileMask;
+        var nMask: u4 = 0;
+        if ((mask & WATER) == WATER) { // if the tile has water available.
+            nMask = nMask | NeighbourMasks.waterNeighbourMask;
+        }
+        if ((mask & GRASS) == GRASS) { //if the tile has grass available.
+            nMask = nMask | NeighbourMasks.grassNeighbourMask;
+        }
+        if ((mask & SAND) == SAND) {
+            nMask = nMask | NeighbourMasks.sandNeighbourMask;
+        }
+        if ((mask & FOREST) == FOREST) {
+            nMask = nMask | NeighbourMasks.forestNeighbourMask;
+        }
+        const checkNeighbours = neighbours(changedCoords.col, changedCoords.row, hexagons.len, hexagons[0].len);
+        for (0..checkNeighbours.len) |i| {
+            const old = hexagons[checkNeighbours.items[i].col][checkNeighbours.items[i].row].tileMask;
+            if (old & nMask != old) {
+                if (hexagons[checkNeighbours.items[i].col][checkNeighbours.items[i].row].inQueue == false) {
+                    changedQueue.pushBack(gpa, checkNeighbours.items[i]) orelse break;
+                }
+                hexagons[checkNeighbours.items[i].col][checkNeighbours.items[i].row].tileMask = old & nMask;
+            }
+        }
+    }
+    return;
 }
