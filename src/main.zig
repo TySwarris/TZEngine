@@ -3,6 +3,7 @@ const math = @import("zmath");
 
 const Rock = @import("sceneObjects/Rock.zig").Rock;
 const Camera = @import("sceneObjects/cameras/OrthographicCamera.zig").OrthographicCamera;
+const Grid = @import("dataStructures/grid.zig").grid;
 
 const ShaderMod = @import("render/shader.zig");
 const Shader = ShaderMod.Shader;
@@ -84,23 +85,27 @@ pub fn main() !void {
             }
         }
     }
-    var prng = std.Random.DefaultPrng.init(seed: {
-        var seed: u64 = undefined;
-        try std.posix.getrandom(std.mem.asBytes(&seed));
-        break :seed seed;
-    });
-    const rand = prng.random();
-    const col = rand.intRangeLessThan(i16, 0, hexArr.len);
-    const row = rand.intRangeLessThan(i16, 0, hexArr[0].len);
+    // var prng = std.Random.DefaultPrng.init(seed: {
+    //     var seed: u64 = undefined;
+    //     try std.posix.getrandom(std.mem.asBytes(&seed));
+    //     break :seed seed;
+    // });
 
-    hexArr[@intCast(col)][@intCast(row)].color = .{ 0, 0, 1 };
-    const neighbours = WFC.neighbours(col, row, hexArr.len, hexArr[0].len);
+    WFC.init(hexArr.len * 2, allocator);
+    defer WFC.deinit(allocator);
 
-    for (0..neighbours.len) |i| {
-        const colI = neighbours.items[i].col;
-        const rowI = neighbours.items[i].row;
-        hexArr[@intCast(colI)][@intCast(rowI)].color = .{ 0.8, 0.8, 0 };
-    }
+    // const rand = prng.random();
+    // const col = rand.intRangeLessThan(i16, 0, hexArr.len);
+    // const row = rand.intRangeLessThan(i16, 0, hexArr[0].len);
+    //
+    // hexArr[@intCast(col)][@intCast(row)].color = .{ 0, 0, 1 };
+    // const neighbours = WFC.neighbours(col, row, hexArr.len, hexArr[0].len);
+    //
+    // for (0..neighbours.len) |i| {
+    //     const colI = neighbours.items[i].col;
+    //     const rowI = neighbours.items[i].row;
+    //     hexArr[@intCast(colI)][@intCast(rowI)].color = .{ 0.8, 0.8, 0 };
+    // }
 
     var frames: f32 = 0.0;
     var timeAccum: f32 = 0.0;
@@ -108,6 +113,10 @@ pub fn main() !void {
         const dt_ns: f32 = @floatFromInt(timer.lap());
         const dt: f32 = dt_ns / 1_000_000_000;
         processInput(window);
+
+        if (glfw.glfwGetKey(window, glfw.GLFW_KEY_N) == glfw.GLFW_PRESS) {
+            try WFC.WFCStep(&hexArr, allocator);
+        }
 
         camera.update(window, dt);
         const view = camera.cam.getViewMatrix();

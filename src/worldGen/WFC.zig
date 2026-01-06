@@ -1,5 +1,6 @@
 const std = @import("std");
 const Hexagon = @import("../sceneObjects/Hexagon.zig").Hexagon;
+const grid = @import("../dataStructures/grid.zig").grid;
 
 const Coord = struct { col: i16, row: i16 };
 const Neighbours = struct {
@@ -7,23 +8,36 @@ const Neighbours = struct {
     len: usize,
 };
 
-const Tiles = struct {
-    waterColor: [3]f32 = .{ 0, 0.5, 0.95 }, //only next to grass or sand
-    grassColor: [3]f32 = .{ 0.04, 0.4, 0.08 }, //only next to grass. sand or forest
-    sandColor: [3]f32 = .{ 1, 1, 0.2 }, //only next to grass or water
-    forestColor: [3]f32 = .{ 0.05, 0.15, 0 }, //only next to grass,
-};
+const MAX_ENTROPY: u4 = 5; //upp this if u make more cells
 
-const NeighbourMasks = struct {
-    waterNeighbourMask: u4 = 0b1110,
-    grassNeighbourMask: u4 = 0b1111,
-    sandNeighbourMask: u4 = 0b1110,
-    forestNeighbourMask: u4 = 0b0101,
-};
+const WATER_COLOR: [3]f32 = .{ 0, 0.5, 0.95 }; //only next to grass or sand
+const GRASS_COLOR: [3]f32 = .{ 0.04, 0.4, 0.08 };
+const SAND_COLOR: [3]f32 = .{ 1, 1, 0.2 };
+const FOREST_COLOR: [3]f32 = .{ 0.05, 0.15, 0 };
+const ENTROPY_4: [3]f32 = .{};
+const ENTROPY_3: [3]f32 = .{};
+const ENTROPY_2: [3]f32 = .{};
+const CONTRADICTION: [3]f32 = .{ 1, 0, 0 };
 
-var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+const WATER_NEIGHBOUR_MASK: u4 = 0b1110;
+const GRASS_NEIGHBOUR_MASK: u4 = 0b1111;
+const SAND_NEIGHBOUR_MASK: u4 = 0b1110;
+const FOREST_NEIGHBOUR_MASK: u4 = 0b0101;
 
-var changedCells = std.Deque(Coord).initCapacity(gpa, 160);
+var changedCells: std.Deque(Coord) = undefined;
+
+pub fn init(queueSize: usize, allocator: std.mem.Allocator) void {
+    changedCells = std.Deque(Coord).initCapacity(allocator, queueSize) catch |err| {
+        std.debug.print("couldn't initialise WFC queue: .{any}\n", .{err});
+        return;
+    };
+
+    return;
+}
+
+pub fn deinit(allocator: std.mem.Allocator) void {
+    changedCells.deinit(allocator);
+}
 
 const WATER: u4 = 0b1000;
 const GRASS: u4 = 0b0100;
@@ -60,7 +74,7 @@ pub fn neighbours(col: i16, row: i16, gridWidth: i16, gridHeight: i16) Neighbour
             .col = col - 1,
             .row = row - 1,
         };
-    } else {
+    } else { //odd column
         unchecked.items[4] = Coord{ //down right diagonal
             .col = col + 1,
             .row = row + 1,
@@ -95,41 +109,45 @@ pub fn checkBounds(toCheck: Neighbours, gridWidth: i16, gridHeight: i16) Neighbo
     return checked;
 }
 
-pub fn WFCStep(Hexagons: [][]Hexagon, gridWidth: i16, gridHeight: i16) void {
-    var checkedCol: usize = undefined;
-    var checkedRow: usize = undefined;
-    var entropy: u4 = undefined;
-    for (Hexagons) |col| {
-        for (col) |hex| {
-            const currentEntropy: u4 = @popCount(hex.tileMask);
-            if (currentEntropy == 1 and hex.collapsed == false) {
-                //checking if any squares only have 1 option in their possible tiles, if they do u should make it that colour and update thhe neighbours possible tile mask.
-                hex.color = maskToTile(hex.tileMask);
-                hex.collapsed = true;
-                var toChange = neighbours(hex.col, hex.row, gridWidth, gridHeight);
-                for (0..toChange.len) |i| {
-                    Hexagons[toChange.items[i]][toChange.items[i]].tileMask = Hexagons[toChange.items[i]][toChange.items[i]].tileMask & neighbourMask(hex.tileMask);
-                }
-                continue;
-            }
-            if (currentEntropy < entropy) { //getting the lowest entropy hexagon.
-                checkedCol = hex.col;
-                checkedRow = hex.row;
-                entropy = currentEntropy;
-            }
+pub fn WFCStep(hexagons: grid, allocator: std.mem.Allocator) void {
+    var checkedCol: i16 = undefined;
+    var checkedRow: i16 = undefined;
+    var lowestEntropy: u4 = MAX_ENTROPY;
+
+    for (0..hexagons.cells.len) |i| {
+        var cell = &hexagons.cells[i];
+        const currentEntropy: u4 = @popCount(cell.tileMask);
+        switch (currentEntropy) {
+            0 => cell.color = CONTRADICTION,
+            1 => {
+                cell.color = maskToTileColor(cell.tileMask);
+                cell.collapsed = true;
+            },
+            2 => cell.color = ENTROPY_2,
+            3 => cell.color = ENTROPY_3,
+            4 => cell.color = ENTROPY_4,
+        }
+        if ((currentEntropy < lowestEntropy) and (currentEntropy > 1)) { //getting the lowest entropy hexagon.hexagons
+            const col: i16 = @intCast(hexagons.indexToColRow(i)[0]);
+            const row: i16 = @intCast(hexagons.indexToColRow(i)[1]);
+            checkedCol = col;
+            checkedRow = row;
+            lowestEntropy = currentEntropy;
         }
     }
-    //now we have the lowest entropy cell in checkekCol and Row variables. it would be the first with the lowest entropy, idk if that is a problem.
 
+    //now we have the lowest entropy cell in checkekCol and Row variables. it would be the first with the lowest entropy, idk if that is a problem.
+    changedCells.pushBack(allocator, Coord{ .col = checkedCol, .row = checkedRow }) catch return;
+    propagation(hexagons, allocator);
 }
 
-pub fn maskToTile(mask: u4) [3]f32 {
+pub fn maskToTileColor(mask: u4) [3]f32 {
     var out: [3]f32 = undefined;
     switch (mask) {
-        WATER => out = Tiles.waterColor,
-        GRASS => out = Tiles.grassColor,
-        SAND => out = Tiles.sandColor,
-        FOREST => out = Tiles.forestColor,
+        WATER => out = WATER_COLOR,
+        GRASS => out = GRASS_COLOR,
+        SAND => out = SAND_COLOR,
+        FOREST => out = FOREST_COLOR,
     }
     return out;
 }
@@ -137,38 +155,45 @@ pub fn maskToTile(mask: u4) [3]f32 {
 pub fn neighbourMask(mask: u4) u4 {
     var out: u4 = undefined;
     switch (mask) {
-        WATER => out = NeighbourMasks.waterNeighbourMask,
-        GRASS => out = NeighbourMasks.grassNeighbourMask,
-        SAND => out = NeighbourMasks.sandNeighbourMask,
-        FOREST => out = NeighbourMasks.forestNeighbourMask,
+        WATER => out = WATER_NEIGHBOUR_MASK,
+        GRASS => out = GRASS_NEIGHBOUR_MASK,
+        SAND => out = SAND_NEIGHBOUR_MASK,
+        FOREST => out = FOREST_NEIGHBOUR_MASK,
     }
     return out;
 }
 
-pub fn propogation(hexagons: [][]Hexagon, changedQueue: std.Deque(Coord)) void {
-    while (changedQueue.popFront()) |changedCoords| {
-        const mask = hexagons[changedCoords.col][changedCoords.row].tileMask;
+pub fn propagation(hexagons: grid, allocator: std.mem.Allocator) void {
+    while (changedCells.popFront()) |changedCoords| {
+        const col: usize = @intCast(changedCoords.col);
+        const row: usize = @intCast(changedCoords.row);
+        hexagons.get(col, row).inQueue = false;
+        const mask: u4 = hexagons.get(col, row).tileMask;
         var nMask: u4 = 0;
-        if ((mask & WATER) == WATER) { // if the tile has water available.
-            nMask = nMask | NeighbourMasks.waterNeighbourMask;
+        if ((mask & WATER) == WATER) {
+            nMask = nMask | WATER_NEIGHBOUR_MASK;
         }
-        if ((mask & GRASS) == GRASS) { //if the tile has grass available.
-            nMask = nMask | NeighbourMasks.grassNeighbourMask;
+        if ((mask & GRASS) == GRASS) {
+            nMask = nMask | GRASS_NEIGHBOUR_MASK;
         }
         if ((mask & SAND) == SAND) {
-            nMask = nMask | NeighbourMasks.sandNeighbourMask;
+            nMask = nMask | SAND_NEIGHBOUR_MASK;
         }
         if ((mask & FOREST) == FOREST) {
-            nMask = nMask | NeighbourMasks.forestNeighbourMask;
+            nMask = nMask | FOREST_NEIGHBOUR_MASK;
         }
         const checkNeighbours = neighbours(changedCoords.col, changedCoords.row, hexagons.len, hexagons[0].len);
         for (0..checkNeighbours.len) |i| {
-            const old = hexagons[checkNeighbours.items[i].col][checkNeighbours.items[i].row].tileMask;
-            if (old & nMask != old) {
-                if (hexagons[checkNeighbours.items[i].col][checkNeighbours.items[i].row].inQueue == false) {
-                    changedQueue.pushBack(gpa, checkNeighbours.items[i]) orelse break;
+            const innerCol: usize = @intCast(checkNeighbours.items[i].col);
+            const innerRow: usize = @intCast(checkNeighbours.items[i].row);
+            const old: u4 = hexagons.get(innerCol, innerRow).tileMask;
+            const newMask: u4 = old & nMask;
+            if ((newMask) != old) {
+                hexagons.get(innerCol, innerRow).tileMask = newMask;
+                if (hexagons.get(innerCol, innerRow).inQueue == false) {
+                    changedCells.pushBack(allocator, checkNeighbours.items[i]) catch break;
+                    hexagons.get(innerCol, innerRow).inQueue = true;
                 }
-                hexagons[checkNeighbours.items[i].col][checkNeighbours.items[i].row].tileMask = old & nMask;
             }
         }
     }

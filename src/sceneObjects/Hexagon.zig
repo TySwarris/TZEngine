@@ -17,8 +17,8 @@ pub const Hexagon = struct {
 
     color: [3]f32 = undefined,
 
-    row: u16,
-    col: u16,
+    row: i16,
+    col: i16,
 
     tileMask: u4,
     collapsed: bool,
@@ -26,7 +26,7 @@ pub const Hexagon = struct {
 
     inQueue: bool,
 
-    pub fn init(self: *Hexagon, allocator: std.mem.Allocator, color: [3]f32, xy: [2]f32, rowCol: [2]u16) !void {
+    pub fn init(self: *Hexagon, allocator: std.mem.Allocator, color: [3]f32, xy: [2]f32, rowCol: [2]i16) !void {
         self.sceneObject = SceneObject.init(allocator);
         self.allocator = allocator;
         self.sceneObject.owner = self;
