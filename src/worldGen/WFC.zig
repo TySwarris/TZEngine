@@ -128,10 +128,9 @@ pub fn WFCStep(hexagons: grid, allocator: std.mem.Allocator) void {
             4 => cell.color = ENTROPY_4,
         }
         if ((currentEntropy < lowestEntropy) and (currentEntropy > 1)) { //getting the lowest entropy hexagon.hexagons
-            const col: i16 = @intCast(hexagons.indexToColRow(i)[0]);
-            const row: i16 = @intCast(hexagons.indexToColRow(i)[1]);
-            checkedCol = col;
-            checkedRow = row;
+            const colRow: [2]usize = hexagons.indexToColRow(i);
+            checkedCol = @intCast(colRow[0]);
+            checkedRow = @intCast(colRow[1]);
             lowestEntropy = currentEntropy;
         }
     }
