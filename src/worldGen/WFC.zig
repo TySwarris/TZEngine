@@ -2,7 +2,7 @@ const std = @import("std");
 const Hexagon = @import("../sceneObjects/Hexagon.zig").Hexagon;
 const grid = @import("../dataStructures/grid.zig").grid;
 
-const Coord = struct { col: i16, row: i16 };
+const Coord = struct { col: isize, row: isize };
 const Neighbours = struct {
     items: [6]Coord,
     len: usize,
@@ -44,7 +44,7 @@ const GRASS: u4 = 0b0100;
 const SAND: u4 = 0b0010;
 const FOREST: u4 = 0b0001;
 
-pub fn neighbours(col: i16, row: i16, gridWidth: i16, gridHeight: i16) Neighbours {
+pub fn neighbours(col: isize, row: isize, gridWidth: isize, gridHeight: isize) Neighbours {
     var unchecked = Neighbours{ .items = undefined, .len = 0 };
 
     //common between columns left right up down
@@ -91,7 +91,7 @@ pub fn neighbours(col: i16, row: i16, gridWidth: i16, gridHeight: i16) Neighbour
     return out;
 }
 
-pub fn checkBounds(toCheck: Neighbours, gridWidth: i16, gridHeight: i16) Neighbours {
+pub fn checkBounds(toCheck: Neighbours, gridWidth: isize, gridHeight: isize) Neighbours {
     var checked: Neighbours = Neighbours{ .items = undefined, .len = 0 };
     var checkedI: usize = 0;
 

@@ -72,40 +72,44 @@ pub fn main() !void {
     var timer = try std.time.Timer.start();
 
     const yOffset: f32 = std.math.sin(60 * std.math.pi / 180.0);
-    var hexArr: [20][20]Hexagon = undefined;
 
-    for (&hexArr, 0..) |*col, c| {
+    var hexgrid: Grid = undefined;
+    hexgrid.init(allocator, 20, 20);
+
+    defer hexgrid.deinit(allocator);
+    for (0..hexgrid.width) |c| {
         const column: f32 = @floatFromInt(c);
-        for (col, 0..) |*cell, r| {
+        for (0..hexgrid.height) |r| {
             const row: f32 = @floatFromInt(r);
-            if (@mod(c, 2) == 1) { // if odd row
+            const cell = hexgrid.get(c, r);
+            if (@mod(c, 2) == 1) {
                 try cell.init(allocator, .{ 0, 0, 0 }, .{ 0.75 * column, (-row - 0.5) * yOffset }, .{ @intCast(r), @intCast(c) }); //shift down to allign
             } else {
                 try cell.init(allocator, .{ 1, 1, 1 }, .{ 0.75 * column, -row * yOffset }, .{ @intCast(r), @intCast(c) });
             }
         }
     }
-    // var prng = std.Random.DefaultPrng.init(seed: {
-    //     var seed: u64 = undefined;
-    //     try std.posix.getrandom(std.mem.asBytes(&seed));
-    //     break :seed seed;
-    // });
+    var prng = std.Random.DefaultPrng.init(seed: {
+        var seed: u64 = undefined;
+        try std.posix.getrandom(std.mem.asBytes(&seed));
+        break :seed seed;
+    });
 
-    WFC.init(hexArr.len * 2, allocator);
+    WFC.init(hexgrid.cells.len, allocator);
     defer WFC.deinit(allocator);
 
-    // const rand = prng.random();
-    // const col = rand.intRangeLessThan(i16, 0, hexArr.len);
-    // const row = rand.intRangeLessThan(i16, 0, hexArr[0].len);
-    //
-    // hexArr[@intCast(col)][@intCast(row)].color = .{ 0, 0, 1 };
-    // const neighbours = WFC.neighbours(col, row, hexArr.len, hexArr[0].len);
-    //
-    // for (0..neighbours.len) |i| {
-    //     const colI = neighbours.items[i].col;
-    //     const rowI = neighbours.items[i].row;
-    //     hexArr[@intCast(colI)][@intCast(rowI)].color = .{ 0.8, 0.8, 0 };
-    // }
+    const rand = prng.random();
+    const index = rand.intRangeLessThan(usize, 0, hexgrid.cells.len);
+
+    hexgrid.cells[index].color = .{ 0, 0, 1 };
+    const colRow: [2]i16 = hexgrid.indexToColRow(index);
+    const neighbours = WFC.neighbours(colRow[0], colRow[1], @intCast(hexgrid.width), @intCast(hexgrid.height));
+
+    for (0..neighbours.len) |i| {
+        const colI: usize = @intCast(neighbours.items[i].col);
+        const rowI: usize = @intCast(neighbours.items[i].row);
+        hexgrid.get(colI, rowI).color = .{ 0.8, 0.8, 0 };
+    }
 
     var frames: f32 = 0.0;
     var timeAccum: f32 = 0.0;
@@ -114,9 +118,9 @@ pub fn main() !void {
         const dt: f32 = dt_ns / 1_000_000_000;
         processInput(window);
 
-        if (glfw.glfwGetKey(window, glfw.GLFW_KEY_N) == glfw.GLFW_PRESS) {
-            try WFC.WFCStep(&hexArr, allocator);
-        }
+        // if (glfw.glfwGetKey(window, glfw.GLFW_KEY_N) == glfw.GLFW_PRESS) {
+        //     try WFC.WFCStep(hexgrid, allocator);
+        // }
 
         camera.update(window, dt);
         const view = camera.cam.getViewMatrix();
@@ -128,10 +132,8 @@ pub fn main() !void {
 
         critter1.sceneObject.draw(viewProj, 0);
 
-        for (&hexArr) |*hexS| {
-            for (hexS) |*hex| {
-                hex.sceneObject.draw(viewProj, 0);
-            }
+        for (0..hexgrid.cells.len) |i| {
+            hexgrid.cells[i].sceneObject.draw(viewProj, 0);
         }
 
         critter1.update(dt);

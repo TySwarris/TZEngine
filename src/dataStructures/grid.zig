@@ -9,7 +9,10 @@ pub const grid = struct {
     pub fn init(self: *grid, allocator: std.mem.Allocator, width: usize, height: usize) void {
         self.width = width;
         self.height = height;
-        self.cells = try allocator.alloc(Hexagon, width * height);
+        self.cells = allocator.alloc(Hexagon, width * height) catch |err| {
+            std.debug.print("couldn't initialise Hexagon list in grid: .{any}\n", .{err});
+            return;
+        };
     }
 
     pub fn deinit(self: *grid, allocator: std.mem.Allocator) void {
@@ -22,10 +25,10 @@ pub const grid = struct {
     }
 
     pub fn get(self: *grid, col: usize, row: usize) *Hexagon {
-        return &self.cells[self.index(col, row)];
+        return &self.cells[self.indexFromColRow(col, row)];
     }
 
-    pub fn indexToColRow(self: *grid, index: usize) [2]usize {
-        return .{ index / self.width, @mod(index, self.width) };
+    pub fn indexToColRow(self: *grid, index: usize) [2]i16 {
+        return .{ @intCast(index / self.width), @intCast(@mod(index, self.width)) };
     }
 };
