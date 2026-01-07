@@ -75,7 +75,6 @@ pub fn main() !void {
 
     var hexgrid: Grid = undefined;
     hexgrid.init(allocator, 20, 20);
-
     defer hexgrid.deinit(allocator);
     for (0..hexgrid.width) |c| {
         const column: f32 = @floatFromInt(c);
@@ -89,20 +88,19 @@ pub fn main() !void {
             }
         }
     }
-    var prng = std.Random.DefaultPrng.init(seed: {
+    var prng = std.Random.DefaultPrng.init(blk: {
         var seed: u64 = undefined;
         try std.posix.getrandom(std.mem.asBytes(&seed));
-        break :seed seed;
+        break :blk seed;
     });
-
-    WFC.init(hexgrid.cells.len, allocator);
-    defer WFC.deinit(allocator);
 
     const rand = prng.random();
     const index = rand.intRangeLessThan(usize, 0, hexgrid.cells.len);
 
+    WFC.init(hexgrid.cells.len, allocator);
+    defer WFC.deinit(allocator);
     hexgrid.cells[index].color = .{ 0, 0, 1 };
-    const colRow: [2]i16 = hexgrid.indexToColRow(index);
+    const colRow: [2]isize = hexgrid.indexToColRow(index);
     const neighbours = WFC.neighbours(colRow[0], colRow[1], @intCast(hexgrid.width), @intCast(hexgrid.height));
 
     for (0..neighbours.len) |i| {
@@ -118,9 +116,13 @@ pub fn main() !void {
         const dt: f32 = dt_ns / 1_000_000_000;
         processInput(window);
 
-        // if (glfw.glfwGetKey(window, glfw.GLFW_KEY_N) == glfw.GLFW_PRESS) {
-        //     try WFC.WFCStep(hexgrid, allocator);
-        // }
+        if (glfw.glfwGetKey(window, glfw.GLFW_KEY_N) == glfw.GLFW_PRESS) {
+            WFC.WFCStep(&hexgrid, allocator, rand);
+        }
+
+        if (glfw.glfwGetKey(window, glfw.GLFW_KEY_R) == glfw.GLFW_PRESS) {
+            WFC.reset(&hexgrid);
+        }
 
         camera.update(window, dt);
         const view = camera.cam.getViewMatrix();

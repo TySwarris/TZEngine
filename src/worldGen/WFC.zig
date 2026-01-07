@@ -11,16 +11,16 @@ const Neighbours = struct {
 const MAX_ENTROPY: u4 = 5; //upp this if u make more cells
 
 const WATER_COLOR: [3]f32 = .{ 0, 0.5, 0.95 }; //only next to grass or sand
-const GRASS_COLOR: [3]f32 = .{ 0.04, 0.4, 0.08 };
+const GRASS_COLOR: [3]f32 = .{ 0.4, 0.8, 0.3 };
 const SAND_COLOR: [3]f32 = .{ 1, 1, 0.2 };
-const FOREST_COLOR: [3]f32 = .{ 0.05, 0.15, 0 };
-const ENTROPY_4: [3]f32 = .{};
-const ENTROPY_3: [3]f32 = .{};
-const ENTROPY_2: [3]f32 = .{};
+const FOREST_COLOR: [3]f32 = .{ 0.1, 0.4, 0.2 };
+const ENTROPY_4: [3]f32 = .{ 0.41, 0.41, 0.41 };
+const ENTROPY_3: [3]f32 = .{ 0.50, 0.50, 0.50 };
+const ENTROPY_2: [3]f32 = .{ 0.83, 0.83, 0.83 };
 const CONTRADICTION: [3]f32 = .{ 1, 0, 0 };
 
-const WATER_NEIGHBOUR_MASK: u4 = 0b1110;
-const GRASS_NEIGHBOUR_MASK: u4 = 0b1111;
+const WATER_NEIGHBOUR_MASK: u4 = 0b1010;
+const GRASS_NEIGHBOUR_MASK: u4 = 0b0111;
 const SAND_NEIGHBOUR_MASK: u4 = 0b1110;
 const FOREST_NEIGHBOUR_MASK: u4 = 0b0101;
 
@@ -85,7 +85,7 @@ pub fn neighbours(col: isize, row: isize, gridWidth: isize, gridHeight: isize) N
         };
     }
 
-    std.debug.print("Initial Hex: col: {d}, row: {d}\n", .{ col, row });
+    //std.debug.print("Initial Hex: col: {d}, row: {d}\n", .{ col, row });
 
     const out = checkBounds(unchecked, gridWidth, gridHeight);
     return out;
@@ -109,7 +109,7 @@ pub fn checkBounds(toCheck: Neighbours, gridWidth: isize, gridHeight: isize) Nei
     return checked;
 }
 
-pub fn WFCStep(hexagons: grid, allocator: std.mem.Allocator) void {
+pub fn WFCStep(hexagons: *grid, allocator: std.mem.Allocator, rand: std.Random) void {
     var checkedCol: i16 = undefined;
     var checkedRow: i16 = undefined;
     var lowestEntropy: u4 = MAX_ENTROPY;
@@ -126,9 +126,10 @@ pub fn WFCStep(hexagons: grid, allocator: std.mem.Allocator) void {
             2 => cell.color = ENTROPY_2,
             3 => cell.color = ENTROPY_3,
             4 => cell.color = ENTROPY_4,
+            else => return,
         }
         if ((currentEntropy < lowestEntropy) and (currentEntropy > 1)) { //getting the lowest entropy hexagon.hexagons
-            const colRow: [2]usize = hexagons.indexToColRow(i);
+            const colRow: [2]isize = hexagons.indexToColRow(i);
             checkedCol = @intCast(colRow[0]);
             checkedRow = @intCast(colRow[1]);
             lowestEntropy = currentEntropy;
@@ -136,8 +137,51 @@ pub fn WFCStep(hexagons: grid, allocator: std.mem.Allocator) void {
     }
 
     //now we have the lowest entropy cell in checkekCol and Row variables. it would be the first with the lowest entropy, idk if that is a problem.
+    if (checkedCol > hexagons.width or checkedRow > hexagons.height or checkedCol < 0 or checkedRow < 0) {
+        return;
+    }
+    var curr = hexagons.get(@intCast(checkedCol), @intCast(checkedRow));
+    curr.tileMask = collapse(curr.tileMask, rand);
     changedCells.pushBack(allocator, Coord{ .col = checkedCol, .row = checkedRow }) catch return;
     propagation(hexagons, allocator);
+}
+
+pub fn collapse(mask: u4, rand: std.Random) u4 {
+    const bitcount = @popCount(mask);
+    if (bitcount <= 1) {
+        return mask;
+    }
+    const keepBit = rand.intRangeLessThan(usize, 0, bitcount);
+    var setbitsFound: u3 = 0;
+    var currBit: u2 = 0;
+
+    while (currBit < 4) {
+        var checkbit: u4 = 0b1000;
+        checkbit = checkbit >> currBit;
+        if ((mask & checkbit) == checkbit) { //checking each bit left to right.
+            if (setbitsFound == keepBit) { //if we are on the bit to keep need to flip all the other bits.
+                return checkbit;
+            }
+            setbitsFound += 1;
+        }
+        currBit += 1;
+    }
+    return 0b0000;
+}
+
+pub fn reset(hexagons: *grid) void {
+    for (0..hexagons.height) |c| {
+        for (0..hexagons.width) |r| {
+            var hex = hexagons.get(c, r);
+            hex.collapsed = false;
+            hex.color = ENTROPY_4;
+            hex.inQueue = false;
+            hex.tileMask = 0b1111;
+        }
+    }
+    while (changedCells.popFront()) |_| {
+        continue;
+    }
 }
 
 pub fn maskToTileColor(mask: u4) [3]f32 {
@@ -147,6 +191,7 @@ pub fn maskToTileColor(mask: u4) [3]f32 {
         GRASS => out = GRASS_COLOR,
         SAND => out = SAND_COLOR,
         FOREST => out = FOREST_COLOR,
+        else => return .{ 0, 0, 0 },
     }
     return out;
 }
@@ -158,11 +203,12 @@ pub fn neighbourMask(mask: u4) u4 {
         GRASS => out = GRASS_NEIGHBOUR_MASK,
         SAND => out = SAND_NEIGHBOUR_MASK,
         FOREST => out = FOREST_NEIGHBOUR_MASK,
+        else => return 0b0000,
     }
     return out;
 }
 
-pub fn propagation(hexagons: grid, allocator: std.mem.Allocator) void {
+pub fn propagation(hexagons: *grid, allocator: std.mem.Allocator) void {
     while (changedCells.popFront()) |changedCoords| {
         const col: usize = @intCast(changedCoords.col);
         const row: usize = @intCast(changedCoords.row);
@@ -181,7 +227,7 @@ pub fn propagation(hexagons: grid, allocator: std.mem.Allocator) void {
         if ((mask & FOREST) == FOREST) {
             nMask = nMask | FOREST_NEIGHBOUR_MASK;
         }
-        const checkNeighbours = neighbours(changedCoords.col, changedCoords.row, hexagons.len, hexagons[0].len);
+        const checkNeighbours = neighbours(changedCoords.col, changedCoords.row, @intCast(hexagons.width), @intCast(hexagons.height));
         for (0..checkNeighbours.len) |i| {
             const innerCol: usize = @intCast(checkNeighbours.items[i].col);
             const innerRow: usize = @intCast(checkNeighbours.items[i].row);

@@ -20,7 +20,7 @@ pub const grid = struct {
     }
 
     //converts col, row to flat index.
-    inline fn indexFromColRow(self: *grid, col: usize, row: usize) usize {
+    inline fn indexFromColRow(self: *const grid, col: usize, row: usize) usize {
         return col * self.height + row;
     }
 
@@ -28,7 +28,7 @@ pub const grid = struct {
         return &self.cells[self.indexFromColRow(col, row)];
     }
 
-    pub fn indexToColRow(self: *grid, index: usize) [2]i16 {
+    pub fn indexToColRow(self: *const grid, index: usize) [2]isize {
         return .{ @intCast(index / self.width), @intCast(@mod(index, self.width)) };
     }
 };
